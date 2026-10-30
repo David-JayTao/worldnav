@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-10-29T03:16:50.322604+09:00",
+  "status": "SMOKE_TEST_ONLY_BASELINE_BLOCKED",
+  "real_input_episodes": 9,
+  "unique_trajectory_groups": 3,
+  "model_inference_episodes": 0,
+  "baseline_evaluated_episodes": 0,
+  "baseline_metrics": {
+    "SR": null,
+    "ATE": null,
+    "RPE": null,
+    "full_route_fidelity": null,
+    "heading_turn_fidelity": null,
+    "Score": null
+  },
+  "GPU_used": false,
+  "model_peak_GPU_memory_MiB": null,
+  "OOM_observed": false,
+  "smoke_seconds": 5.13811972271651,
+  "blockers": [
+    "No usable trained LCVN checkpoint found in inspected local/official sources",
+    "Uni fork Transformers dependency and FlashAttention unavailable",
+    "Official full CodaBench manifest download unavailable without a working download/session"
+  ],
+  "controls": "Reference-derived round-trip only, NOT model output or baseline scores"
+}

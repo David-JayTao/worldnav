@@ -1,0 +1,6 @@
+[submodule "vendor/track1"]
+	path = vendor/track1
+	url = https://github.com/roboworld2026/track1.git
+[submodule "vendor/LCVN"]
+	path = vendor/LCVN
+	url = https://github.com/UWMILab/LCVN.git
