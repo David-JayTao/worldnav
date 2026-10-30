@@ -1,0 +1,8 @@
+{
+  "repository": "fly1113/LCVN",
+  "revision": "ecf02ef425398b3cf5bd76a729fae1edd928ed98",
+  "splits": {
+    "val_seen": {"size": 7409704960, "sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1"},
+    "val_unseen": {"size": 20311838720, "sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55"}
+  }
+}

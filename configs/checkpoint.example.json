@@ -1,0 +1,10 @@
+{
+  "source_url": null,
+  "training_checkpoint_id": null,
+  "base_repo": "leloy/Anole-7b-v0.1-hf",
+  "base_revision": "96df52301e844d8a624a13953051ead4c008343b",
+  "base_dir": "models/anole",
+  "adapter_dir": "models/lcvn-uni",
+  "files": [],
+  "note": "Template only; NOT a checkpoint. Fill verified official provenance and SHA256 entries for every required file."
+}
