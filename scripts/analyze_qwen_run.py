@@ -42,6 +42,8 @@ def figures(run,root):
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     manifest=json.loads((run/'manifest.json').read_text());items={key(x):x for x in manifest['episodes']}
+    api_config=json.loads((run/'api_config.json').read_text())
+    model_label=api_config.get('model','unknown')+' / '+api_config.get('prompt_version','unknown')
     rows=[json.loads(p.read_text()) for p in (run/'cases').glob('*.json')]
     valid=[r for r in rows if r['evaluation_metrics'] is not None]
     if not valid:return []
@@ -67,8 +69,8 @@ def figures(run,root):
         axes[1].scatter([0],[0],c='black',s=25,label='Start');axes[1].axis('equal');axes[1].grid(alpha=.25)
         axes[1].set_xlabel('X / dataset units');axes[1].set_ylabel('Y / dataset units');axes[1].legend(fontsize=8)
         axes[1].set_title(f"SR={m['SR']} ATE={m['ATE']:.3f} RPE={m['RPE']:.3f}\nF={m['full_route_fidelity']:.3f} H={m['heading_turn_fidelity']:.3f} Score={m['Score']:.3f}")
-        fig.suptitle(f"{role}: {row['episode_id']} ({row['split']})",fontsize=10)
-        fig.text(.02,.02,textwrap.fill(observation.instruction,110),fontsize=8,va='bottom');fig.tight_layout(rect=(0,.12,1,.92))
+        fig.suptitle(f"{model_label}\n{role}: {row['episode_id']} ({row['split']})",fontsize=9)
+        fig.text(.02,.02,textwrap.fill(observation.instruction,110),fontsize=8,va='bottom');fig.tight_layout(rect=(0,.12,1,.88))
         target=run/'figures'/(role+'.png');fig.savefig(target,dpi=150);plt.close(fig)
         selections.append(dict(role=role,episode_id=row['episode_id'],split=row['split'],
                                navigation_success=bool(m['SR']),file=str(target.relative_to(run)),metrics=m))

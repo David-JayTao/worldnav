@@ -14,9 +14,26 @@ from PIL import Image
 from worldnav.runner import dump
 from run_qwen_api import initialize
 from run_api_sprint import recover_persisted_response,archive_incomplete_or_failed
+from compare_experiments import compare
 
 
 class SprintTests(unittest.TestCase):
+    def test_paired_comparison_uses_same_data_and_failure_denominator(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base,opt=[Path(tmp)/name for name in ('base','opt')]
+            items=[dict(episode_id=str(i),split=s,image_sha256='a'*64,metadata_sha256='b'*64,
+                        trajectory_sha256=str(i),instruction='Go') for i,s in enumerate(('val_seen','val_unseen'))]
+            for root in (base,opt):dump(root/'manifest.json',{'episodes':items})
+            for i,item in enumerate(items):
+                name=item['split']+'__'+item['episode_id']+'.json'
+                dump(base/'cases'/name,dict(prediction_valid=True,evaluation_metrics={'Score':10,'SR':0}))
+                dump(opt/'cases'/name,dict(prediction_valid=i==0,evaluation_metrics={'Score':20,'SR':1} if i==0 else None))
+            result=compare(base,opt)
+            self.assertEqual(result['cases'],2);self.assertEqual(result['score_mean_delta'],0)
+            self.assertEqual(result['improved'],1);self.assertEqual(result['worsened'],1)
+            changed=json.loads((opt/'manifest.json').read_text());changed['episodes'][0]['instruction']='Different'
+            (opt/'manifest.json').write_text(json.dumps(changed))
+            with self.assertRaises(ValueError):compare(base,opt)
     def test_development_manifest_has_no_formal_trajectory_overlap(self):
         root=Path(__file__).resolve().parents[1]
         formal=json.loads((root/'configs/eval_100.json').read_text())['episodes']

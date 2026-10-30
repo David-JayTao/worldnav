@@ -92,6 +92,7 @@ def sprint_summary(run,manifest,budget,cfg):
         spending_authorization='worldnav_sprint_20261031',
         stop_reason='complete' if len(rows)==len(manifest['episodes']) else 'in_progress_or_interrupted')
     result['historical_request_count']=len(historical)
+    result['intermediate_parse_failure_count']=sum('parse_error' in a for a in all_attempts)
     result['request_failure_counts']=dict(collections.Counter(
         str(a.get('http_status') or a.get('error_type') or 'unknown') for a in all_attempts if not a['api_success']))
     result['total_input_tokens']+=sum((a.get('raw_response',{}).get('usage') or {}).get('prompt_tokens',0) or 0 for a in historical)

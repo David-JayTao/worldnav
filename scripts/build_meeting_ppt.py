@@ -8,6 +8,7 @@ import re
 import shutil
 import statistics
 import sys
+import os
 from zoneinfo import ZoneInfo
 from pptx import Presentation
 from pptx.util import Inches,Pt
@@ -118,7 +119,7 @@ def result_rows(base,opt):
     return rows
 
 
-def build_reports(base,opt,dev,notes,test_log):
+def build_reports(base,opt,dev,notes,test_log,data_root):
     now=datetime.now(ZoneInfo('Asia/Tokyo')).isoformat(timespec='seconds')
     table_rows=result_rows(base,opt)
     md_table='\n'.join(['| '+' | '.join(row)+' |' for row in [table_rows[0],['---']*len(table_rows[0]),*table_rows[1:]]])
@@ -126,8 +127,16 @@ def build_reports(base,opt,dev,notes,test_log):
     for v,s in dev.items():
         if s:dev_rows.append(f"| V{v} | {s['completed_records']} | {fmt(s['overall']['metrics_on_evaluated']['SR'])} | {fmt(s['overall'].get('score_all_planned_failure_zero'))} |")
     selection=read(ROOT/'runs/qwen_prompt_ablation/selection.json',{})
+    paired=read(ROOT/'runs/model_comparison/paired.json',{})
+    diagnostics={name:read(ROOT/f'runs/{folder}/metrics/diagnostics.json',{}).get('overall',{})
+                 for name,folder in [('Base','qwen_api_100case_baseline'),('候选版','qwen_api_100case_optimized')]}
+    diag_rows=['| 实验 | 预测步数 | 参考步数 | 预测长度 | 参考长度 | 逐例长度比均值 | 终点误差 | 航向误差 rad |','|---|---:|---:|---:|---:|---:|---:|---:|']
+    for name,d in diagnostics.items():
+        diag_rows.append('| '+name+' | '+' | '.join(fmt(d.get(k)) for k in ('predicted_action_count','reference_action_count','predicted_path_length','reference_path_length','path_length_ratio','endpoint_error','final_heading_error'))+' |')
     manifest=read(ROOT/'runs/qwen_api_100case_baseline/manifest.json')
-    bytes_unseen=(Path('/data1/worldnav-data/archives/val_unseen.tar').stat().st_size if Path('/data1/worldnav-data/archives/val_unseen.tar').exists() else Path('/data1/worldnav-data/archives/val_unseen.tar.part').stat().st_size)
+    unseen_path=data_root/'archives/val_unseen.tar'
+    if not unseen_path.exists():unseen_path=unseen_path.with_suffix('.tar.part')
+    bytes_unseen=unseen_path.stat().st_size if unseen_path.exists() else 0
     case_rows=[]
     for p in sorted((ROOT/'runs/qwen_api_100case_baseline/cases').glob('*.json')):
         r=read(p);m=r.get('evaluation_metrics') or {}
@@ -170,7 +179,9 @@ Policy 边界只含初始图像和指令；严格 JSON/动作校验；当前 yaw
 
 *Score 为计划分母下失败/未完成记零的本地汇总；SR/ATE/RPE/F/H 表列为有效评估子集均值。未完成时，这不是已完成 100-case 的结果。有效子集 Score 均分：Base {fmt((base.get('overall') or {}).get('metrics_on_evaluated',{}).get('Score'))}；优化候选 {fmt((opt.get('overall') or {}).get('metrics_on_evaluated',{}).get('Score'))}。
 
-API 累积延迟（可含客户端等待）{fmt(base.get('total_api_latency_seconds'),2)} 秒；已报告输入/输出 Token {base.get('total_input_tokens',0):,} / {base.get('total_output_tokens',0):,}。价格和账户实际账单未确认，不编造货币费用。用户本轮已明确授权超过先前 10 次请求上限；所有实验仍采用有限请求预算。
+API 累积延迟（可含客户端等待）{fmt(base.get('total_api_latency_seconds'),2)} 秒；已报告输入/输出 Token {base.get('total_input_tokens',0):,} / {base.get('total_output_tokens',0):,}。请求级错误 {base.get('request_failure_counts',{})}，中间格式失败 {base.get('intermediate_parse_failure_count','待刷新')} 次，合法率是有限重试后的最终 case 合法率。价格和账户实际账单未确认，不编造货币费用。用户本轮已明确授权超过先前 10 次请求上限；所有实验仍采用有限请求预算。
+
+温度 0 不保证远程服务逐次生成完全一致，模型 alias 不能锁定服务端权重更新。这里可复现的是固定输入、配置与原始响应的完整离线解析和指标；响应 ID、服务方 usage 等原始元数据均保存，不声称服务端位级确定性。
 
 ## 6. Prompt 优化与配对比较
 
@@ -180,17 +191,25 @@ V1：原始零样本；V2：按可行路径、地标、转弯和停止位置进�
 
 选择证据：`{json.dumps(selection,ensure_ascii=False)}`。选择只读取开发集，正式集指标不用于选参数；若非基础最优，仍明确报告候选未胜出，不改写负结果。候选正式集有效评估 {opt.get('evaluated_cases',0)} / 100，Prompt 版本 {opt.get('prompt_version','尚未冻结')}。
 
+配对分析（正式集完成后计算）：Score 差值 {fmt(paired.get('score_mean_delta'))}，95% 配对 bootstrap 区间 {paired.get('paired_bootstrap_95ci','尚未计算')}；提升/下降/持平 {paired.get('improved','—')}/{paired.get('worsened','—')}/{paired.get('tied','—')}。数据键、图片/元数据哈希和指令均须一致才允许比较。小开发集和前缀抽样限制了可外推性。
+
 ## 7. Cosmos 核查与对照
 
 现有 SinapisAI 模型目录 387 项，无 Cosmos 路由。NVIDIA_API_KEY、NVIDIA_NIM_API_KEY、NGC_API_KEY、NGC_CLI_API_KEY、HF_TOKEN 及用户标准配置路径均未发现可用授权。NVIDIA 模型目录列出 nvidia/cosmos-reason2-8b，但向该 endpoint 发送不带认证的真实图片请求返回 HTTP 401。未把 SinapisAI Key 发往 NVIDIA。
 
 官方旧 build 页面当前跳转到 Cosmos3 Nano Reasoner，不能替换后声称跑过 Reason2-8B。没有新建账户、购买服务或使用不明 Key；Cosmos 有效推理 0 / 100，指标未测。对照表必须写“未运行/授权缺失”，不能填 0 分或冒充已完成。官方来源见 cosmos_report.md。
 
+额外找到公开 `gulle1155/Cosmos-Reason2-8B` Space，源码固定官方权重 revision `a9fae2cf89dc64db96b12860417f0eb403013bb9`，但 Space runtime=PAUSED，主页和 /v1/models 均返回 HTTP 503；没有权限启动他人的 Space。该路线目前同样无法推理，已保留代码版本和状态证据。
+
 ## 8. 典型案例与误差分析
 
 实际图像/指令/预测/GT 叠图位于 `runs/qwen_api_100case_baseline/figures/`。若没有 SR=1 样本，图注使用“有效预测中最佳”，不把生成成功当作导航成功。逐样本尺度、步数、总长度、终点误差、朝向误差和转弯统计位于 `metrics/diagnostics.json`；这些是事后诊断，不用于同一正式集校准。
 
 开放环单图无法观察远端路径，通用 VLM 的尺度与停止位置估计可能失准。该解释是待检验假设；数值支持应以路径长度比和终点误差统计为准。API 失败与导航失败分别记录。
+
+{chr(10).join(diag_rows)}
+
+所有数值为已持久化预测的事后统计。逐例长度比的均值不等于总长度比。正式集的这些诊断仅用于解释，不用于调整本轮候选策略；V2/V3 在全量基础结果出现前已定义，选型只读取独立开发集。
 
 ## 9. 下一阶段
 
@@ -225,10 +244,11 @@ V1：原始零样本；V2：按可行路径、地标、转弯和停止位置进�
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,default=ROOT/'reports/WorldNav_阶段进展汇报_20261031.pptx')
+    p.add_argument('--data-root',type=Path,default=Path(os.getenv('WORLDNAV_DATA_ROOT','/data1/worldnav-data')))
     p.add_argument('--test-log',default='logs/tests_sprint_20261031.log');args=p.parse_args()
     base,opt,dev=sources();prs=Presentation();prs.slide_width=Inches(13.333);prs.slide_height=Inches(7.5)
     manifest=read(ROOT/'runs/qwen_api_100case_baseline/manifest.json');first=manifest['episodes'][1]
-    data_root=Path('/data1/worldnav-data');initial=data_root/'samples'/first['split']/first['episode_id']/'0.jpg'
+    data_root=args.data_root;initial=data_root/'samples'/first['split']/first['episode_id']/'0.jpg'
     notes=[]
     s=slide(prs,'WorldNav：视觉语言导航任务与实验进展',1)
     text(s,.7,1.8,7.3,1.3,'看一张图，听一句指令\n预测机器人接下来怎么走',32,BLUE,True)
@@ -238,8 +258,9 @@ def main():
     notes.append('今天先用三页介绍 WorldNav 是什么，再汇报我们实际完成的工程和模型实验。任务的关键是，机器人只能看一张起始图片，然后根据一句自然语言指令，预测接下来整段路线。我们使用远程视觉语言 API 建立零样本策略，所以本地没有 GPU 也可以开展实验。但这条路线不是官方 LCVN 模型复现，下面会把二者明确区分。')
     s=slide(prs,'比赛任务是什么？',2,'开放环导航：开始时看一次，后续没有真实环境反馈')
     s.shapes.add_picture(str(initial),Inches(.7),Inches(1.8),width=Inches(5.3))
-    box(s,6.5,1.8,6,3.6);text(s,6.8,2.05,5.4,.5,'“沿路前进，在指定位置转弯并停下”',21,BLUE,True)
-    text(s,6.8,2.9,5.2,2.4,'视觉：哪一条路可通行？地标在哪里？\n语言：要经过什么、向哪边转、在哪里停？\n规划：把描述变成一整段动作。',20)
+    box(s,6.5,1.8,6,3.8);text(s,6.8,2.05,5.4,.8,'“沿砾石小路直行，在步道尽头停下”',20,BLUE,True)
+    text(s,6.8,2.95,5.2,.8,first['instruction'],13,GRAY)
+    text(s,6.8,4.05,5.2,1.35,'视觉：哪一条路可通行？\n语言：往哪里走、在哪里停？\n规划：把描述变成一整段动作。',18)
     text(s,.8,6.2,11.8,.5,'难点：只看得到起点，却要推断远处的路线、距离和停止位置。',20,TEAL,True)
     notes.append('可以把任务想象成：我们把机器人放在一条小路或走廊里，只给它眼前这一帧，再告诉它往前走、经过一个地标、向右转、到某处停止。模型既要看懂环境，也要理解指令中的先后关系。开放环的意思是，走起来以后，它不会获得真实的新图片来纠正错误。因此，开始时对距离或者转弯位置的一点误判，可能沿着整条路线累积。')
     s=slide(prs,'输入与输出：预测的是轨迹，不是图片描述',3)
@@ -286,8 +307,15 @@ def main():
     else:text(s,.9,2,11,2,'轨迹图尚未生成；不使用人工构造轨迹冒充模型输出。',22)
     notes.append('这里展示的初始图片、导航指令和两条曲线全部来自真实样本。蓝线是仅在评测阶段读取的参考轨迹，橙线是 API 输出动作积分得到的预测。即使路径的大方向看起来合理，转弯发生得过晚、总距离偏大或者停止位置不准确，都可能导致 SR 为零。若这页标题使用“最佳有效预测”，它只表示有合法输出，不代表已经导航成功。')
     s=slide(prs,'问题与分析：区分工程错误、模型误差和资源阻塞',9)
-    table(s,[['问题','现有证据 / 下一步'],['动作尺度与终止','事后统计路径长度比、终点误差；只在开发集选策略'],['转弯与朝向','对照预测和参考转弯量，检查左右方向与转弯位置'],['开放环局限','起始单帧无法观察远端；不把合理文字等同于正确路线'],['API 稳定性','保存真实错误，有限重试，429 降并发'],['Cosmos / LCVN','Cosmos 缺少授权；LCVN 缺任务权重与可用 GPU']],.7,1.7,11.9,4.6,[3,8.9],17)
-    notes.append('我们把问题分成三类。第一类是工程错误，例如坐标旋转或动作解析，必须靠测试和官方证据排除。第二类是模型误差，包括尺度、转弯位置和终止判断，需要用开发集验证改进。第三类是资源阻塞：现有服务没有 Cosmos 路由，NVIDIA 请求没有授权会返回 401；LCVN 则还缺导航训练权重和 GPU。不同问题需要不同解决办法，不能用更多工程代码掩盖模型尚未跑通的事实。')
+    bd=read(ROOT/'runs/qwen_api_100case_baseline/metrics/diagnostics.json',{}).get('overall',{})
+    od=read(ROOT/'runs/qwen_api_100case_optimized/metrics/diagnostics.json',{}).get('overall',{})
+    diag_table=[['事后诊断（均值）','Base','候选版']]
+    for label,field in [('预测动作数','predicted_action_count'),('参考动作数','reference_action_count'),('逐例路径长度比','path_length_ratio'),('终点误差（数据单位）','endpoint_error'),('最终朝向误差（rad）','final_heading_error')]:
+        diag_table.append([label,fmt(bd.get(field)),fmt(od.get(field))])
+    table(s,diag_table,.7,1.7,7,3.9,[3.5,1.75,1.75],17)
+    box(s,8.1,1.7,4.5,4.6);text(s,8.35,2,4,3.9,'如何理解这些数字？\n\n步数少，不一定走得短。\n尺度、转弯和停止位置都重要。\n\n正式集仅做事后解释，\n参数选择只使用开发集。',18,BLUE)
+    text(s,.8,6.25,11.8,.5,'资源阻塞独立记录：Cosmos 无授权且公开 Space 暂停；LCVN 缺任务权重和 GPU。',15,GRAY)
+    notes.append(f"我们把工程问题、模型误差和资源阻塞分开。基础版平均输出 {fmt(bd.get('predicted_action_count'),1)} 步，参考平均 {fmt(bd.get('reference_action_count'),1)} 步，但逐例路径长度比平均达到 {fmt(bd.get('path_length_ratio'),2)} 倍，说明步数少不等于走得短。尺度和停止位置偏差值得关注，转弯量也需要对照。这里是正式集事后解释，不用于同一正式集校准。候选策略已经先在独立开发集选定。Cosmos 授权和 LCVN 权重则是另一类资源问题，不能靠调 Prompt 解决。")
     s=slide(prs,'下一阶段：从可运行对照走向可信研究结论',10)
     steps=[('01','完成与复算','冻结基础版、候选版同一 100-case 对照'),('02','补齐 Cosmos','取得现有授权 endpoint；同清单、同指标'),('03','复现专用模型','获取 LCVN 训练产物与 GPU，先 3 例验证'),('04','扩大验证','完整归档抽样、更多场景、报告失败与局限')]
     for i,(n,a,b) in enumerate(steps):
@@ -299,7 +327,7 @@ def main():
     if args.output.exists():
         archive=ROOT/'local_archive/meeting_versions'/datetime.now().strftime('%Y%m%dT%H%M%S%f');archive.mkdir(parents=True,exist_ok=True);shutil.copy2(args.output,archive/args.output.name)
     prs.save(args.output)
-    build_reports(base,opt,dev,notes,args.test_log)
+    build_reports(base,opt,dev,notes,args.test_log,args.data_root)
     evidence=dict(slides=len(prs.slides),base_evaluated=base.get('evaluated_cases',0),optimized_evaluated=opt.get('evaluated_cases',0),
         ppt_sha256=hashlib.sha256(args.output.read_bytes()).hexdigest(),sources=['runs/qwen_api_100case_baseline/summary.json','runs/qwen_api_100case_optimized/summary.json'])
     (ROOT/'logs/meeting_build_evidence.json').write_text(json.dumps(evidence,indent=2)+'\n');print(json.dumps(evidence,indent=2))
