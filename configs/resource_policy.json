@@ -1,0 +1,5 @@
+{
+  "gpu_inference_allowed": false,
+  "allocated_gpu_count": 0,
+  "reason": "CPU-only until the user explicitly confirms GPU allocation; no assumed date"
+}

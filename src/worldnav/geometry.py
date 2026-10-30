@@ -32,7 +32,8 @@ def integrate(actions, initial_pose=(0., 0., 0.)):
 def reference_actions(position, yaw):
     if len(position) != len(yaw) or len(position) < 2:
         raise ValueError("Reference requires matching position/yaw and at least two poses")
-    return [world_delta_to_local([b[0]-a[0],b[1]-a[1],yb-ya],ya)
+    # Promote before subtraction: float32 deltas otherwise lose precision.
+    return [world_delta_to_local([float(b[0])-float(a[0]),float(b[1])-float(a[1]),float(yb)-float(ya)],float(ya))
             for a,b,ya,yb in zip(position,position[1:],yaw,yaw[1:])]
 
 

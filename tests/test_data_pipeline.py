@@ -21,6 +21,13 @@ from build_eval_manifest import catalog,choose,save_unchanged
 
 
 class DataTests(unittest.TestCase):
+    def test_float32_reference_roundtrip(self):
+        from worldnav.geometry import reference_actions,integrate
+        pos=np.array([[123.4,50.2],[124.3,51.1],[125.7,52.4]],dtype=np.float32)
+        yaw=np.array([3.13,-3.12,-2.8],dtype=np.float32)
+        xy,_=integrate(reference_actions(pos,yaw),[*pos[0],yaw[0]])
+        np.testing.assert_allclose(xy,pos,rtol=0,atol=1e-12)
+
     def test_numpy_protocols(self):
         raw={'position':np.array([[0.,0.],[1.,0.]]),'yaw':np.array([0.,0.]),'instruction':'forward'}
         for protocol in (4,5):

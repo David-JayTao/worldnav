@@ -5,7 +5,7 @@ export CUDA_VISIBLE_DEVICES=""
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 WANDB_MODE=disabled
 export PYTHONDONTWRITEBYTECODE=1
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MPLCONFIGDIR="$PWD/.cache/matplotlib"
-PYTHON="${WORLDNAV_PYTHON:-.venv/bin/python}"
+PYTHON="${WORLDNAV_PYTHON:-.venv-cpu/bin/python}"
 if [ ! -x "$PYTHON" ]; then
     printf '%s\n' 'Create the project environment first; see docs/REPRODUCTION.md.' >&2
     exit 1
