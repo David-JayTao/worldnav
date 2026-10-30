@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 import subprocess
 import time
+import os
+import uuid
 from .data import load_observation,load_reference
 from .evaluation import evaluate,load_metrics
 from .geometry import integrate
@@ -18,16 +20,21 @@ METRICS=('SR','ATE','RPE','full_route_fidelity','heading_turn_fidelity','Score')
 
 def dump(path,data):
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
-    with path.open('x',encoding='utf8') as stream:
-        json.dump(data,stream,ensure_ascii=False,indent=2,allow_nan=False)
-        stream.write('\n')
+    temporary=path.parent/('.'+path.name+'.'+uuid.uuid4().hex+'.tmp')
+    try:
+        with temporary.open('x',encoding='utf8') as stream:
+            json.dump(data,stream,ensure_ascii=False,indent=2,allow_nan=False)
+            stream.write('\n');stream.flush();os.fsync(stream.fileno())
+        os.link(temporary,path)  # Atomic publication, still refuses existing results.
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def provenance():
     def git(*args):
         return subprocess.run(['git',*args],cwd=ROOT,text=True,capture_output=True).stdout.strip()
     versions={}
-    for name in ('numpy','Pillow','torch','torchvision','transformers','peft','flash-attn','safetensors'):
+    for name in ('numpy','Pillow','matplotlib','openai','httpx','torch','torchvision','transformers','peft','flash-attn','safetensors'):
         try:versions[name]=importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:versions[name]=None
     hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()

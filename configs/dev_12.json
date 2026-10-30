@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "name": "independent_development_12",
+  "manifest_kind": "independent_development_sample",
+  "official_manifest_verified": false,
+  "dataset_revision": "ecf02ef425398b3cf5bd76a729fae1edd928ed98",
+  "seed": 20261031,
+  "data_root": "${WORLDNAV_DATA_ROOT}",
+  "sources": {
+    "val_seen": {
+      "snapshot_bytes": 978381967,
+      "snapshot_sha256": "89ba49d30a507ada255ed1ca33230c12606859604a6ee9beb2418b4a357fe980",
+      "archive_bytes": 7409704960,
+      "archive_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+      "archive_verified": false,
+      "catalog_episode_count": 3140,
+      "sampling_scope": "downloaded_prefix"
+    },
+    "val_unseen": {
+      "snapshot_bytes": 1133410305,
+      "snapshot_sha256": "d39036fbfa7c6cb2af7ee800c6b6bdfd101260f19d673750701c5bd8fdc77054",
+      "archive_bytes": 20311838720,
+      "archive_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+      "archive_verified": false,
+      "catalog_episode_count": 228,
+      "sampling_scope": "downloaded_prefix"
+    }
+  },
+  "episodes": [
+    {
+      "episode_id": "Feb-21-2023-soda3-intloss_00000020_0_5_0_0",
+      "split": "val_seen",
+      "trajectory_sha256": "a8ebec663d0beba2379edf3bcbce91beae8ea370ba90b2254f576642685dd85f",
+      "instruction_style": 0,
+      "metadata_offset": 361302016,
+      "metadata_size": 1232,
+      "metadata_sha256": "116e1069d1b75832409dc257b3b15f4bbc20ec92bf57fb1b12655fe42869902d",
+      "image_offset": 361150464,
+      "image_size": 5453,
+      "source_image_name": "0.jpg",
+      "image_sha256": "c1fcd1bdcf1b958620639cd159d1aa3dd42f6c3d73ee20d346335e0af819fbff"
+    },
+    {
+      "episode_id": "Feb-23-2023-soda3-intloss_00000017_0_12_0_1",
+      "split": "val_seen",
+      "trajectory_sha256": "81bfff11ee5e09694cea4844c4284bf55f9832e0b756beb7dfce22206dc92374",
+      "instruction_style": 1,
+      "metadata_offset": 376094720,
+      "metadata_size": 948,
+      "metadata_sha256": "8fcd1f6e9cde16d9240f59fea71fc2c66ab433abd15f8fe37047d5bcb6938937",
+      "image_offset": 376027136,
+      "image_size": 5837,
+      "source_image_name": "0.jpg",
+      "image_sha256": "a1938bdf726788f6746c56d9e8b0b021d3bb2b5a420f3303258939847fe65773"
+    },
+    {
+      "episode_id": "Nov-17-2022-bww8_00000016_0_0_0_2",
+      "split": "val_seen",
+      "trajectory_sha256": "c47698f43febdb43b91c00ea0028262c34e86676aa7453a259604561a7d2081e",
+      "instruction_style": 2,
+      "metadata_offset": 473740800,
+      "metadata_size": 1208,
+      "metadata_sha256": "5c742234119ce89ca6dd78723f034d228a4d49d1347d745c1268e340e654dcb0",
+      "image_offset": 473615872,
+      "image_size": 6191,
+      "source_image_name": "0.jpg",
+      "image_sha256": "55302eef95419d60e6a31e9e2d5abd56b026d06cdf0caec3fab2d7bd698a613c"
+    },
+    {
+      "episode_id": "Feb-09-2023-bww8-intloss_00000022_1_1_0_0",
+      "split": "val_seen",
+      "trajectory_sha256": "93de8d0136f3152c1716ff31e9dcde5b5f0f441314dc23681090e30b53e56eba",
+      "instruction_style": 0,
+      "metadata_offset": 188527104,
+      "metadata_size": 1310,
+      "metadata_sha256": "eb6201552694564a6d5e974af344d60da3eccea6f85de2be10e746a646f7bcff",
+      "image_offset": 188369920,
+      "image_size": 5519,
+      "source_image_name": "0.jpg",
+      "image_sha256": "56d1c80a95dcef0635ea70a697eb8b25e381343fb8b938ec64c5cabfcee062e8"
+    },
+    {
+      "episode_id": "Dec-06-2022-bww8_00000032_0_13_0_1",
+      "split": "val_seen",
+      "trajectory_sha256": "96ebf4e0092effa29c062fa873365d835dc86d961161682baa70a406b8a9de00",
+      "instruction_style": 1,
+      "metadata_offset": 33291776,
+      "metadata_size": 1105,
+      "metadata_sha256": "9645e1c137a9790cce6826bd56a2b91e45872139b54b8685960714bfd3040500",
+      "image_offset": 33176576,
+      "image_size": 7081,
+      "source_image_name": "0.jpg",
+      "image_sha256": "13221e5b73122752e6daf28f179f8ade5ba0827a894b7058ac1ba7a8fad7dfbb"
+    },
+    {
+      "episode_id": "Dec-09-2022-bww8_00000007_0_15_0_2",
+      "split": "val_seen",
+      "trajectory_sha256": "90026ac34a8fd1566ad379d57a13dce9b13afd3e62ff74df4bcf5a7bddb44b25",
+      "instruction_style": 2,
+      "metadata_offset": 66063872,
+      "metadata_size": 794,
+      "metadata_sha256": "24fd6fbca2434125121f574f5fa01039eded17718ae8c72fd4b4f5c02072dd4a",
+      "image_offset": 65988608,
+      "image_size": 6772,
+      "source_image_name": "0.jpg",
+      "image_sha256": "0d37a7760906937f948ec172f85585d36b746298dbfc4cfd4fa7ff3e2fb1cb84"
+    },
+    {
+      "episode_id": "20210826_42_0001_09_0",
+      "split": "val_unseen",
+      "trajectory_sha256": "6f47bde970d241d82df80c8fb847d4c2b57e24f4d3b4658de9cd6cafde0d2288",
+      "instruction_style": 0,
+      "metadata_offset": 172487168,
+      "metadata_size": 787,
+      "metadata_sha256": "1738aeaa2e61573c9774e384f91e39fceab0154a4f82aeed5e22360c66476cad",
+      "image_offset": 166701568,
+      "image_size": 289426,
+      "source_image_name": "0000.jpg",
+      "image_sha256": "95ba6dd632c84eb0d49cf999153818f6d49ef59388e884716c7eab35d97a9e3f"
+    },
+    {
+      "episode_id": "20210826_51_0001_07_1",
+      "split": "val_unseen",
+      "trajectory_sha256": "2a8fbba28ad35943c6033ecbe4e2735a8edf3d764afba97d0d4f541db63be566",
+      "instruction_style": 1,
+      "metadata_offset": 783599616,
+      "metadata_size": 1112,
+      "metadata_sha256": "44a9246ddba5817a1547d8a6a4307a8a25b5688b56e17760d11ff0321ce5e0c9",
+      "image_offset": 779439104,
+      "image_size": 226222,
+      "source_image_name": "0000.jpg",
+      "image_sha256": "e0aa460fe2a6bd325dc724a6ff661687600fe94dd774bd3a4a48db03f793e68e"
+    },
+    {
+      "episode_id": "20210826_42_0001_14_2",
+      "split": "val_unseen",
+      "trajectory_sha256": "f7bccdd5ab159edf659bdc6ac748ec166e770d66e1383065707eae4a2d4957f2",
+      "instruction_style": 2,
+      "metadata_offset": 232168960,
+      "metadata_size": 904,
+      "metadata_sha256": "55c16abf56fd2093c66be6ebb87b18d379c83d5a600913a476f5bae043c9d8da",
+      "image_offset": 226913280,
+      "image_size": 266580,
+      "source_image_name": "0000.jpg",
+      "image_sha256": "6dd24d88d880d63310e3c7116aa70423aa7f1088f57c17c9d2af1e044ab361c0"
+    },
+    {
+      "episode_id": "20210826_43_0001_14_0",
+      "split": "val_unseen",
+      "trajectory_sha256": "507c6a8f5e25df20cebbf8c90582db3b04be657c5ae641cda8fa1fc023f4e501",
+      "instruction_style": 0,
+      "metadata_offset": 470894080,
+      "metadata_size": 715,
+      "metadata_sha256": "f70fc93fd399dca56063e6de49bd44f89fba496325f9e1fe0304bbfa7711112c",
+      "image_offset": 466546176,
+      "image_size": 250207,
+      "source_image_name": "0000.jpg",
+      "image_sha256": "efc124eba4e8f061dc9a4c10c6cf5bd33b30f60f6bb77b68d4ac218be39df4c1"
+    },
+    {
+      "episode_id": "20210826_53_0001_04_1",
+      "split": "val_unseen",
+      "trajectory_sha256": "903cdc831702f9980a60038bfd7fc361bcb7a4333e485d29a04b38268cd79627",
+      "instruction_style": 1,
+      "metadata_offset": 845048320,
+      "metadata_size": 1088,
+      "metadata_sha256": "ed94e4f8b415a32dcf7a6bb455ac966fa3ecba960a12ba8687ef4a3f68271862",
+      "image_offset": 839433728,
+      "image_size": 262402,
+      "source_image_name": "0000.jpg",
+      "image_sha256": "2485f77bcf1fe88085a18d009521775c18678423e82bb2985c623ec6979ad1f2"
+    },
+    {
+      "episode_id": "20210826_53_0001_01_2",
+      "split": "val_unseen",
+      "trajectory_sha256": "9fb1c5ca6b3149f2e56b95690df01fb4d063f031d36d70a1b26434844206b9ee",
+      "instruction_style": 2,
+      "metadata_offset": 818077696,
+      "metadata_size": 913,
+      "metadata_sha256": "4f52a0938eb7e60dbf7d7edaacc5dcbe786cb4af00fbe83a8cc95a3ad6818cc4",
+      "image_offset": 812595712,
+      "image_size": 286395,
+      "source_image_name": "0000.jpg",
+      "image_sha256": "4a48f920612755a17d28eb36fb31a2dafe2c26ce450d13da00811c3391e3fdc7"
+    }
+  ],
+  "model": {
+    "backend": "lcvn_uni",
+    "checkpoint_manifest": null,
+    "model_action_frame": "canonical_world",
+    "initial_pose_policy": "canonical_zero_experimental",
+    "max_steps": 26,
+    "memory_bank": false
+  },
+  "protocol": {
+    "max_actions": 64,
+    "max_translation": 2.46,
+    "max_abs_dyaw": 6.29
+  },
+  "evaluation": {
+    "scorer": "public_demonstration",
+    "average_step_source": "reference",
+    "failed_episodes": "excluded_and_reported"
+  },
+  "excludes_formal_trajectory_groups": true
+}

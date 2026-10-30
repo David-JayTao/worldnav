@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 BLOCKED_SUFFIX={'.pkl','.jpg','.jpeg','.tar','.zip','.pt','.pth','.bin','.ckpt','.safetensors','.pem','.key','.log'}
-BLOCKED_ROOT={'data','outputs','logs','local_archive','.venv','.cache','wandb'}
+BLOCKED_ROOT={'data','outputs','runs','logs','local_archive','.venv','.cache','wandb'}
 PATTERNS=[rb'-----BEGIN [A-Z ]*PRIVATE KEY-----',rb'gh[pousr]_[A-Za-z0-9]{20,}',
           rb'github_pat_[A-Za-z0-9_]{30,}',rb'hf_[A-Za-z0-9]{20,}',rb'sk-[A-Za-z0-9_-]{24,}',
           rb'/home/[A-Za-z0-9_-]+/',rb'/data/[A-Za-z0-9_-]+/(?:miniconda|\.ssh)',
@@ -14,7 +14,9 @@ PATTERNS=[rb'-----BEGIN [A-Z ]*PRIVATE KEY-----',rb'gh[pousr]_[A-Za-z0-9]{20,}',
 
 def audit_blob(name,content):
     path=PurePosixPath(name);problems=[]
-    if path.parts[0] in BLOCKED_ROOT or path.suffix in BLOCKED_SUFFIX or '.env'==path.name:
+    if (path.parts[0] in BLOCKED_ROOT or path.parts[0].startswith('.venv') or
+        path.suffix in BLOCKED_SUFFIX or path.name=='.env' or
+        (path.name.startswith('.env.') and path.name!='.env.example')):
         problems.append('excluded artifact type')
     if len(content)>1024*1024:problems.append('blob exceeds 1 MiB; needs explicit review')
     for index,pattern in enumerate(PATTERNS):

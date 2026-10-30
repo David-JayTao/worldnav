@@ -12,11 +12,12 @@ from .actions import adapt_action,decode_action,normalize_generation_output
 from .checkpoint import verify_checkpoint
 from .geometry import wrap_angle
 from .protocol import validate
+from .policy import BasePolicy
 
 ROOT=Path(__file__).resolve().parents[2]
 
 
-class UniPolicy:
+class UniPolicy(BasePolicy):
     def __init__(self,config,checkpoint_manifest):
         self.config=config
         if config.get('initial_pose_policy')!='canonical_zero_experimental':
@@ -109,7 +110,7 @@ class UniPolicy:
                     text=text.replace(marker,'').strip()
                 texts.append(text)
                 numeric=decode_action(text)
-                if numeric is None or numeric==[0.,0.,0.]: reason='stop';break
+                if numeric is None: reason='stop';break
                 local=adapt_action(numeric,self.config['model_action_frame'],yaw)
                 validate({'split':'val_seen','episodes':[{'episode_id':'generated','actions':[local]}]},'val_seen')
                 actions.append(local);yaw+=wrap_angle(numeric[2])
