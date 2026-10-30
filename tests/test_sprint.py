@@ -29,6 +29,7 @@ class SprintTests(unittest.TestCase):
                 dump(base/'cases'/name,dict(prediction_valid=True,evaluation_metrics={'Score':10,'SR':0}))
                 dump(opt/'cases'/name,dict(prediction_valid=i==0,evaluation_metrics={'Score':20,'SR':1} if i==0 else None))
             result=compare(base,opt)
+            json.dumps(result,allow_nan=False)  # All NumPy scalar results must serialize.
             self.assertEqual(result['cases'],2);self.assertEqual(result['score_mean_delta'],0)
             self.assertEqual(result['improved'],1);self.assertEqual(result['worsened'],1)
             changed=json.loads((opt/'manifest.json').read_text());changed['episodes'][0]['instruction']='Different'

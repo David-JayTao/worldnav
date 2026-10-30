@@ -27,8 +27,8 @@ def diagnose(run,root):
             predicted_path_length=length,reference_path_length=rlength,
             path_length_ratio=length/rlength if rlength>1e-12 else None,
             endpoint_error=math.dist(xy[-1],rxy[-1]),final_heading_error=abs(wrap_angle(yaw[-1]-ryaw[-1])),
-            predicted_abs_turn=sum(abs(a[2]) for a in actions),reference_abs_turn=sum(abs(a[2]) for a in ref_actions),
-            predicted_net_turn=sum(a[2] for a in actions),reference_net_turn=sum(a[2] for a in ref_actions),
+            predicted_abs_turn=sum(abs(wrap_angle(a[2])) for a in actions),reference_abs_turn=sum(abs(a[2]) for a in ref_actions),
+            predicted_net_turn=sum(wrap_angle(a[2]) for a in actions),reference_net_turn=sum(a[2] for a in ref_actions),
             predicted_zero_steps=sum(a==[0,0,0] for a in actions)))
     def aggregate(group):
         fields=['predicted_action_count','reference_action_count','predicted_path_length','reference_path_length',

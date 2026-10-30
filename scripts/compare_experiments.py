@@ -31,7 +31,7 @@ def compare(base,opt):
     bootstrap=delta[rng.integers(0,len(rows),size=(5000,len(rows)))].mean(axis=1)
     return dict(cases=len(rows),failure_score_policy='zero_for_no_usable_prediction',
         score_mean_delta=float(delta.mean()),paired_bootstrap_95ci=[float(x) for x in np.quantile(bootstrap,[.025,.975])],
-        improved=sum(x>1e-10 for x in delta),worsened=sum(x< -1e-10 for x in delta),tied=sum(abs(x)<=1e-10 for x in delta),
+        improved=int(np.count_nonzero(delta>1e-10)),worsened=int(np.count_nonzero(delta< -1e-10)),tied=int(np.count_nonzero(np.abs(delta)<=1e-10)),
         sr_gained=sum(r['optimized_SR']==1 and r['base_SR']==0 for r in rows),
         sr_lost=sum(r['optimized_SR']==0 and r['base_SR']==1 for r in rows),
         per_split={s:float(np.mean([r['score_delta'] for r in rows if r['split']==s])) for s in ('val_seen','val_unseen')},rows=rows)

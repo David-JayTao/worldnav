@@ -82,3 +82,12 @@ Qwen 入口固定 SinapisAI 和目标模型，不能把 Key 改发其他 Provide
 ## 8. Git
 
 仅显式 add 可公开源代码、测试、脱敏配置和文档；运行 `git diff --cached --check` 和 `scripts/audit_public.py`。runs、数据、权重、日志、环境排除在外；未经审核的 MEETING_BRIEF 草稿不暂存。本轮禁止自动公开 push，保留本地中文提交。
+
+## 9. 已完成候选实验的直接恢复命令
+
+```sh
+sh scripts/run_api_sprint.sh --manifest configs/eval_100.json --api-config configs/qwen_optimized_100.json --data-root "$WORLDNAV_DATA_ROOT" --run-dir runs/qwen_api_100case_optimized --resume
+"$HOME/.venv/bin/python" scripts/compare_experiments.py --base runs/qwen_api_100case_baseline --optimized runs/qwen_api_100case_optimized --output runs/model_comparison/paired.json
+```
+
+已完成 case 不再发出 API 请求；复算无需 Key。两条格式失败保留为失败，不在冻结正式集上反复请求直至成功。

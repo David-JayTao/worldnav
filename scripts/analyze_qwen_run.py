@@ -77,10 +77,11 @@ def figures(run,root):
     failures=[r for r in rows if r['failure_category']]
     if failures:
         row=failures[0];obs=load_observation(root,items[key(row)])
+        failure_role='api_failure' if row['failure_category']=='api_error' else 'prediction_failure'
         fig,ax=plt.subplots(figsize=(7,4));ax.imshow(obs.image);ax.axis('off')
         ax.set_title(f"{row['episode_id']} ({row['split']})\n{row['failure_category']}: no usable prediction; no fabricated route",fontsize=9)
-        target=run/'figures/api_failure.png';fig.savefig(target,dpi=150,bbox_inches='tight');plt.close(fig)
-        selections.append(dict(role='api_failure',episode_id=row['episode_id'],file=str(target.relative_to(run))))
+        target=run/'figures'/(failure_role+'.png');fig.savefig(target,dpi=150,bbox_inches='tight');plt.close(fig)
+        selections.append(dict(role=failure_role,episode_id=row['episode_id'],file=str(target.relative_to(run))))
     update(run/'figures/index.json',dict(navigation_success_count=len(success),selections=selections,
         note='Best valid prediction denotes successful generation; it does not imply navigation success.'))
     return selections

@@ -27,3 +27,7 @@
 [官方前置要求](https://docs.nvidia.com/cosmos/latest/prerequisites.html)列出 8B 最低 32GB GPU 显存，主要验证 Hopper/Blackwell；不能假设单张 24GB 3090 足够，双卡显存也不会自动合并。[官方推理参考](https://docs.nvidia.com/cosmos/latest/reason2/reference.html)要求 Transformers >=4.57.0；必须与 Uni 的旧 fork 分开环境。实际多卡分片、量化、上下文和注意力后端均未测试。
 
 已完成 `src/worldnav/cosmos.py` 的纯 CPU prompt 和严格 JSON 解析契约与测试。未完成 processor 实际预处理、模型加载、生成、导航动作语义验证与质量评估；此模块不代表 Cosmos 适配完成。后续优先复用团队经过验证的环境和 prompt，再固定版本、许可证、权重哈希与实验配置。不得通过 CPU 强跑完整 8B 模型替代 GPU 实验。
+
+## 2026-10-31 API 路线更新
+
+新增的真实推理发生在远程 SinapisAI Qwen 服务，本机未加载 CUDA 或 8B 模型；这不改变本文关于 LCVN 训练产物缺失和 Cosmos 本地部署未验证的结论。Cosmos 额外检查了 SinapisAI 全目录（无该模型）、NVIDIA 匿名真实图片请求（401）、公开 HF Space `gulle1155/Cosmos-Reason2-8B`（固定官方 revision，但 PAUSED/503）。未使用不明密钥、未新建账户或购买服务，详见最新 cosmos_report。

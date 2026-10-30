@@ -49,6 +49,7 @@ def box(slide,x,y,w,h,fill=PALE,line=None,radius=True):
 def text(slide,x,y,w,h,value,size=20,color=DARK,bold=False,align=None):
     shape=slide.shapes.add_textbox(Inches(x),Inches(y),Inches(w),Inches(h));frame=shape.text_frame
     frame.word_wrap=True;frame.margin_left=Inches(.03);frame.margin_right=Inches(.03)
+    frame.margin_top=0;frame.margin_bottom=0
     for i,line in enumerate(str(value).split('\n')):
         p=frame.paragraphs[0] if i==0 else frame.add_paragraph();p.text=line
         p.font.name=FONT;p.font.size=Pt(size);p.font.bold=bold;p.font.color.rgb=RGBColor.from_string(color)
@@ -108,20 +109,22 @@ def sources():
     return base,opt,dev
 
 
-def result_rows(base,opt):
-    rows=[['实验 / Split','有效/计划','SR','ATE','RPE','F','H','Score*']]
+def result_rows(base,opt,include_all_splits=False):
+    rows=[['实验 / Split','有效/计划','SR*','ATE','RPE','F','H','Score*']]
     for label,summary in [('Base',base),('候选优化',opt)]:
         if not summary:continue
         groups=[('Overall',summary['overall'],summary['planned_cases'])]
-        if label=='Base':groups.extend((s,summary['per_split'][s],50) for s in ('val_seen','val_unseen'))
+        if label=='Base' or include_all_splits:groups.extend((s,summary['per_split'][s],50) for s in ('val_seen','val_unseen'))
         for split,g,n in groups:
-            m=g['metrics_on_evaluated'];rows.append([label+' / '+split,f"{g['evaluated']}/{n}",fmt(m['SR']),fmt(m['ATE']),fmt(m['RPE']),fmt(m['full_route_fidelity']),fmt(m['heading_turn_fidelity']),fmt(g.get('score_all_planned_failure_zero',g['score_failure_zero']))])
+            m=g['metrics_on_evaluated'];sr_value=g.get('sr_all_planned_failure_zero',m['SR'])
+            sr='—' if sr_value is None else f"{100*sr_value:.1f}%"
+            rows.append([label+' / '+split,f"{g['evaluated']}/{n}",sr,fmt(m['ATE']),fmt(m['RPE']),fmt(m['full_route_fidelity']),fmt(m['heading_turn_fidelity']),fmt(g.get('score_all_planned_failure_zero',g['score_failure_zero']))])
     return rows
 
 
 def build_reports(base,opt,dev,notes,test_log,data_root):
     now=datetime.now(ZoneInfo('Asia/Tokyo')).isoformat(timespec='seconds')
-    table_rows=result_rows(base,opt)
+    table_rows=result_rows(base,opt,include_all_splits=True)
     md_table='\n'.join(['| '+' | '.join(row)+' |' for row in [table_rows[0],['---']*len(table_rows[0]),*table_rows[1:]]])
     dev_rows=['| Prompt | 完成/12 | SR（有效子集） | 失败记零 Score |','|---|---:|---:|---:|']
     for v,s in dev.items():
@@ -138,6 +141,15 @@ def build_reports(base,opt,dev,notes,test_log,data_root):
     if not unseen_path.exists():unseen_path=unseen_path.with_suffix('.tar.part')
     bytes_unseen=unseen_path.stat().st_size if unseen_path.exists() else 0
     case_rows=[]
+    failure_rows=['| 实验 | Episode ID | 最终失败类型 | 原始记录中的具体原因 |','|---|---|---|---|']
+    for experiment in ('qwen_api_100case_baseline','qwen_api_100case_optimized'):
+        run=ROOT/'runs'/experiment
+        for p in (run/'cases').glob('*.json') if run.exists() else []:
+            row=read(p)
+            if not row.get('failure_category'):continue
+            raw=read(run/'raw_responses'/p.name,{})
+            reasons=[str(a.get('parse_error') or a.get('error_message') or a.get('error_type') or '') for a in raw.get('attempts',[])]
+            failure_rows.append('| '+experiment+' | '+row['episode_id']+' | '+row['failure_category']+' | '+'；'.join(reasons).replace('|','/')+' |')
     for p in sorted((ROOT/'runs/qwen_api_100case_baseline/cases').glob('*.json')):
         r=read(p);m=r.get('evaluation_metrics') or {}
         case_rows.append(f"| {r['episode_id']} | {r['split']} | {r['status']} | {fmt(m.get('SR'))} | {fmt(m.get('Score'))} | {fmt(r.get('api_latency_seconds'),2)} | {r.get('input_tokens')} / {r.get('output_tokens')} |")
@@ -177,7 +189,7 @@ Policy 边界只含初始图像和指令；严格 JSON/动作校验；当前 yaw
 
 {md_table}
 
-*Score 为计划分母下失败/未完成记零的本地汇总；SR/ATE/RPE/F/H 表列为有效评估子集均值。未完成时，这不是已完成 100-case 的结果。有效子集 Score 均分：Base {fmt((base.get('overall') or {}).get('metrics_on_evaluated',{}).get('Score'))}；优化候选 {fmt((opt.get('overall') or {}).get('metrics_on_evaluated',{}).get('Score'))}。
+*SR 和 Score 为计划分母下失败/未完成记零的本地汇总；ATE/RPE/F/H 表列为有效评估子集均值。未完成时，这不是已完成 100-case 的结果。有效子集 Score 均分：Base {fmt((base.get('overall') or {}).get('metrics_on_evaluated',{}).get('Score'))}；优化候选 {fmt((opt.get('overall') or {}).get('metrics_on_evaluated',{}).get('Score'))}。有效子集 SR：Base {fmt((base.get('overall') or {}).get('metrics_on_evaluated',{}).get('SR'))}；优化候选 {fmt((opt.get('overall') or {}).get('metrics_on_evaluated',{}).get('SR'))}。
 
 API 累积延迟（可含客户端等待）{fmt(base.get('total_api_latency_seconds'),2)} 秒；已报告输入/输出 Token {base.get('total_input_tokens',0):,} / {base.get('total_output_tokens',0):,}。请求级错误 {base.get('request_failure_counts',{})}，中间格式失败 {base.get('intermediate_parse_failure_count','待刷新')} 次，合法率是有限重试后的最终 case 合法率。价格和账户实际账单未确认，不编造货币费用。用户本轮已明确授权超过先前 10 次请求上限；所有实验仍采用有限请求预算。
 
@@ -192,6 +204,8 @@ V1：原始零样本；V2：按可行路径、地标、转弯和停止位置进�
 选择证据：`{json.dumps(selection,ensure_ascii=False)}`。选择只读取开发集，正式集指标不用于选参数；若非基础最优，仍明确报告候选未胜出，不改写负结果。候选正式集有效评估 {opt.get('evaluated_cases',0)} / 100，Prompt 版本 {opt.get('prompt_version','尚未冻结')}。
 
 配对分析（正式集完成后计算）：Score 差值 {fmt(paired.get('score_mean_delta'))}，95% 配对 bootstrap 区间 {paired.get('paired_bootstrap_95ci','尚未计算')}；提升/下降/持平 {paired.get('improved','—')}/{paired.get('worsened','—')}/{paired.get('tied','—')}。数据键、图片/元数据哈希和指令均须一致才允许比较。小开发集和前缀抽样限制了可外推性。
+
+此区间仅反映当前 100 个本地样本的重采样波动，不证明完整验证集的泛化性能。
 
 ## 7. Cosmos 核查与对照
 
@@ -211,9 +225,13 @@ V1：原始零样本；V2：按可行路径、地标、转弯和停止位置进�
 
 所有数值为已持久化预测的事后统计。逐例长度比的均值不等于总长度比。正式集的这些诊断仅用于解释，不用于调整本轮候选策略；V2/V3 在全量基础结果出现前已定义，选型只读取独立开发集。
 
+{chr(10).join(failure_rows)}
+
+格式失败保持无预测状态；没有人为补缺失数字、截断到合法长度或以零动作替代。
+
 ## 9. 下一阶段
 
-先完成并复算所有授权实验，冻结开发集选择，报告负结果和置信局限；获取 Cosmos 的现有 NVIDIA 授权凭据或团队托管 endpoint，使用同一清单完成对照。LCVN-Uni 另需导航训练 adapter、扩展 tokenizer/processor、准确基座版本与 GPU 分配。更大规模验证使用未来完整归档抽样，避免把当前前缀集外推为全数据结论。
+固化本轮结果与开发集选型，明确保留格式失败和统计局限；下一轮先在开发集验证更可靠的结构化输出，再冻结新版本。获取 Cosmos 的现有 NVIDIA 授权凭据或团队托管 endpoint，使用同一清单完成对照。LCVN-Uni 另需导航训练 adapter、扩展 tokenizer/processor、准确基座版本与 GPU 分配。更大规模验证使用未来完整归档抽样，避免把当前前缀集外推为全数据结论。
 
 ## 10. 可复现命令
 
@@ -246,7 +264,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,default=ROOT/'reports/WorldNav_阶段进展汇报_20261031.pptx')
     p.add_argument('--data-root',type=Path,default=Path(os.getenv('WORLDNAV_DATA_ROOT','/data1/worldnav-data')))
     p.add_argument('--test-log',default='logs/tests_sprint_20261031.log');args=p.parse_args()
-    base,opt,dev=sources();prs=Presentation();prs.slide_width=Inches(13.333);prs.slide_height=Inches(7.5)
+    base,opt,dev=sources();prs=Presentation();prs.slide_width=Inches(40/3);prs.slide_height=Inches(7.5)
     manifest=read(ROOT/'runs/qwen_api_100case_baseline/manifest.json');first=manifest['episodes'][1]
     data_root=args.data_root;initial=data_root/'samples'/first['split']/first['episode_id']/'0.jpg'
     notes=[]
@@ -298,13 +316,23 @@ def main():
     for label,summary in [('Base',base),('候选优化',opt)]:
         if summary:series.append((label,[summary['per_split'][sp].get('score_all_planned_failure_zero',0) for sp in ('val_seen','val_unseen')]))
     chart(s,['Seen','Unseen'],series,.8,4.5,6.5,2.3,'Score：计划分母下失败 / 未完成记零')
-    text(s,7.6,4.8,4.8,1.6,'* SR / ATE / RPE / F / H：有效评估子集\n* Score：计划分母，失败记零\n* Cosmos 未运行 ≠ 0 分\n* 未完成快照不能写成 100 例完成',14,GRAY)
-    notes.append(f"现在磁盘中的真实状态是：基础版有效评估 {base.get('evaluated_cases',0)} 条，优化候选有效评估 {opt.get('evaluated_cases',0)} 条。表中同时展示有效预测的条件指标，以及按计划分母把失败记零的分数。我们没有把 API 成功当作导航成功，也没有从分母中偷偷删掉失败。Prompt 选择只基于独立开发集，最终再在相同的一百条上做配对比较。即使优化没有提升，也会保留这个负结果。")
+    dev_scores=' / '.join(f"V{v} {fmt(s.get('overall',{}).get('score_all_planned_failure_zero'),2)}" for v,s in dev.items())
+    text(s,7.6,4.5,4.8,.7,'独立开发集 Score：\n'+dev_scores,12,BLUE,True)
+    text(s,7.6,5.25,4.8,1.4,'* SR / Score：计划分母，失败记零\n* ATE / RPE / F / H：有效评估子集\n* Cosmos 未运行 ≠ 0 分\n* 格式失败保留在 100 例分母中',13,GRAY)
+    base_sr=base.get('overall',{}).get('sr_all_planned_failure_zero')
+    opt_sr=opt.get('overall',{}).get('sr_all_planned_failure_zero')
+    notes.append(f"现在磁盘中的真实状态是：基础版有效评估 {base.get('evaluated_cases',0)} 条，优化候选有效评估 {opt.get('evaluated_cases',0)} 条。基础版总体 SR 为 {fmt(None if base_sr is None else 100*base_sr,1)}%，Score 为 {fmt(base.get('overall',{}).get('score_all_planned_failure_zero'),2)}；候选版总体 SR 为 {fmt(None if opt_sr is None else 100*opt_sr,1)}%，Score 为 {fmt(opt.get('overall',{}).get('score_all_planned_failure_zero'),2)}。表中保留有效子集与失败记零的区别。API 成功不等于导航成功，失败也没有从分母中删掉。Prompt 只在独立开发集选择，再在相同的一百条做配对比较；即使没有提升，也保留负结果。")
     s=slide(prs,'典型案例：看懂场景，仍可能走错距离与转弯',8)
     fig_dir=ROOT/'runs/qwen_api_100case_baseline/figures';idx=read(fig_dir/'index.json',{})
     chosen=fig_dir/('navigation_success.png' if idx.get('navigation_success_count',0)>0 else 'best_valid_prediction.png')
     if chosen.exists():s.shapes.add_picture(str(chosen),Inches(.65),Inches(1.55),width=Inches(12.0))
     else:text(s,.9,2,11,2,'轨迹图尚未生成；不使用人工构造轨迹冒充模型输出。',22)
+    role='navigation_success' if idx.get('navigation_success_count',0)>0 else 'best_valid_prediction'
+    selection=next((e for e in idx.get('selections',[]) if e['role']==role),None)
+    if selection:
+        prediction=read(ROOT/'runs/qwen_api_100case_baseline/predictions'/(selection['split']+'__'+selection['episode_id']+'.json'))
+        acts=prediction['episodes'][0]['actions']
+        text(s,.8,6.65,11.8,.3,'真实输出动作（前两步）：'+str(acts[:2])+f'；共 {len(acts)} 步。',12,GRAY)
     notes.append('这里展示的初始图片、导航指令和两条曲线全部来自真实样本。蓝线是仅在评测阶段读取的参考轨迹，橙线是 API 输出动作积分得到的预测。即使路径的大方向看起来合理，转弯发生得过晚、总距离偏大或者停止位置不准确，都可能导致 SR 为零。若这页标题使用“最佳有效预测”，它只表示有合法输出，不代表已经导航成功。')
     s=slide(prs,'问题与分析：区分工程错误、模型误差和资源阻塞',9)
     bd=read(ROOT/'runs/qwen_api_100case_baseline/metrics/diagnostics.json',{}).get('overall',{})
@@ -313,11 +341,11 @@ def main():
     for label,field in [('预测动作数','predicted_action_count'),('参考动作数','reference_action_count'),('逐例路径长度比','path_length_ratio'),('终点误差（数据单位）','endpoint_error'),('最终朝向误差（rad）','final_heading_error')]:
         diag_table.append([label,fmt(bd.get(field)),fmt(od.get(field))])
     table(s,diag_table,.7,1.7,7,3.9,[3.5,1.75,1.75],17)
-    box(s,8.1,1.7,4.5,4.6);text(s,8.35,2,4,3.9,'如何理解这些数字？\n\n步数少，不一定走得短。\n尺度、转弯和停止位置都重要。\n\n正式集仅做事后解释，\n参数选择只使用开发集。',18,BLUE)
+    box(s,8.1,1.7,4.5,4.3);text(s,8.35,2,4,3.9,'如何理解这些数字？\n\n步数少，不一定走得短。\n尺度、转弯和停止位置都重要。\n\n正式集仅做事后解释，\n参数选择只使用开发集。',18,BLUE)
     text(s,.8,6.25,11.8,.5,'资源阻塞独立记录：Cosmos 无授权且公开 Space 暂停；LCVN 缺任务权重和 GPU。',15,GRAY)
     notes.append(f"我们把工程问题、模型误差和资源阻塞分开。基础版平均输出 {fmt(bd.get('predicted_action_count'),1)} 步，参考平均 {fmt(bd.get('reference_action_count'),1)} 步，但逐例路径长度比平均达到 {fmt(bd.get('path_length_ratio'),2)} 倍，说明步数少不等于走得短。尺度和停止位置偏差值得关注，转弯量也需要对照。这里是正式集事后解释，不用于同一正式集校准。候选策略已经先在独立开发集选定。Cosmos 授权和 LCVN 权重则是另一类资源问题，不能靠调 Prompt 解决。")
     s=slide(prs,'下一阶段：从可运行对照走向可信研究结论',10)
-    steps=[('01','完成与复算','冻结基础版、候选版同一 100-case 对照'),('02','补齐 Cosmos','取得现有授权 endpoint；同清单、同指标'),('03','复现专用模型','获取 LCVN 训练产物与 GPU，先 3 例验证'),('04','扩大验证','完整归档抽样、更多场景、报告失败与局限')]
+    steps=[('01','固化结果与方法','归档 100-case 对照；开发集验证格式可靠性'),('02','补齐 Cosmos','取得现有授权 endpoint；同清单、同指标'),('03','复现专用模型','获取 LCVN 训练产物与 GPU，先 3 例验证'),('04','扩大验证','完整归档抽样、更多场景、报告失败与局限')]
     for i,(n,a,b) in enumerate(steps):
         y=1.65+i*1.17;box(s,.8,y,.65,.65,BLUE);text(s,.85,y+.05,.55,.4,n,19,WHITE,True)
         text(s,1.7,y,3.1,.5,a,22,BLUE,True);text(s,4.9,y+.05,7.4,.6,b,19)
