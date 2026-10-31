@@ -81,7 +81,7 @@ Qwen 入口固定 SinapisAI 和目标模型，不能把 Key 改发其他 Provide
 
 ## 8. Git
 
-仅显式 add 可公开源代码、测试、脱敏配置和文档；运行 `git diff --cached --check` 和 `scripts/audit_public.py`。runs、数据、权重、日志、环境排除在外；未经审核的 MEETING_BRIEF 草稿不暂存。本轮禁止自动公开 push，保留本地中文提交。
+仅显式 add 可公开源代码、测试、脱敏配置和文档；运行 `git diff --cached --check` 和 `scripts/audit_public.py`。runs、数据、权重、日志、环境排除在外；会议成果已获用户上传授权。最新阶段允许安全正常推送：先中文提交、核对远端、审计公开内容，禁止强制推送。
 
 ## 9. 已完成候选实验的直接恢复命令
 
@@ -91,3 +91,19 @@ sh scripts/run_api_sprint.sh --manifest configs/eval_100.json --api-config confi
 ```
 
 已完成 case 不再发出 API 请求；复算无需 Key。两条格式失败保留为失败，不在冻结正式集上反复请求直至成功。
+
+
+## 10. 第二阶段研究流程
+
+先查 `reports/server_audit_20261031.md` 和 `reports/stage2_freeze.json`。不可重复启动已完成实验；快照脚本每次创建独立只读目录，SHA256全索引见 `reports/stage2_frozen_sha256.json`。
+
+- 旧数据独立重算：`scripts/recompute_stage2.py`，输出新目录，不改旧运行目录。已存在输出时拒绝覆盖，复核可直接调用模块内 `recompute(run, data_root)`。
+- 开发集：`scripts/run_stage2_research.sh`，顺序比较Scale/Stop/Turn/Structured/RobustJSON及独立视觉模型，最多3并发、每候选36请求；JSON先做单例能力检查。不要在已有tmux任务时重复启动。
+- 冻结：`scripts/select_stage2.py`只读取开发集指标；配置已存在时拒绝重新选择。候选正式实验仅执行一次，两条旧V3格式失败保持原样。
+- 完整数据：`scripts/complete_validation.sh`从现有part续传，内层4次指数退避、外层3次有界循环，完成后全包SHA256和逐图片审计。固定来源在configs/datasets.json，不重复下载已有字节。
+- 新完整归档清单：`scripts/prepare_full_stage2.sh`，种子20261101，排除旧正式集与dev12全部轨迹组；新清单仅在完整文件哈希正确时生成。按具有三种指令的轨迹组分层抽样，不声称全部episode等概率。
+- 全归档新对照：`scripts/run_stage2_full_control.sh`等待候选冻结且旧正式实验结束，再顺序执行新清单Base与候选；不据新测试结果修改策略。
+- 深入分析：`scripts/analyze_stage2.py`，原始响应解码、严格对照保存动作与指标，输出分组、误差分布和7组配对真实案例。不调用API，不改变模型输入。
+- 最终复算：`scripts/finalize_stage2.py`，写最终指标、数据审计摘要与Markdown；`scripts/build_stage2_ppt.py`生成13页可编辑PPT和讲稿、数据来源。
+
+所有Python入口使用已存在的独立API环境；CUDA_VISIBLE_DEVICES留空。原始证据位于runs/outputs/logs，Git只提交脱敏汇总，不上传原始预测或原始API响应。NVIDIA认证不可用时Cosmos记NOT RUN，不使用Sinapis密钥跨服务商请求。计费货币价格未知，仅统计实际请求与Token，不估造账单。

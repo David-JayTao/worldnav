@@ -1,0 +1,33 @@
+{
+  "gpu_allocated": 0,
+  "credential_configured": {
+    "NVIDIA_API_KEY": false,
+    "NVIDIA_NIM_API_KEY": false,
+    "NGC_API_KEY": false,
+    "NGC_CLI_API_KEY": false,
+    "HF_TOKEN": false,
+    "COSMOS_API_KEY": false,
+    "COSMOS_BASE_URL": false
+  },
+  "credential_files_present": {
+    ".ngc/config": false,
+    ".cache/huggingface/token": false,
+    ".config/nvidia/api.env": false
+  },
+  "sinapis_model_count": 387,
+  "sinapis_cosmos_models": [],
+  "nvidia_models": {
+    "status": 200,
+    "cosmos_models": [
+      "nvidia/cosmos-reason2-8b"
+    ],
+    "stage": null
+  },
+  "space_runtime": {
+    "status": 200,
+    "cosmos_models": [],
+    "stage": "PAUSED"
+  },
+  "nvidia_anonymous_real_image_status": 401,
+  "Cosmos Reason2-8B": "NOT RUN / AUTHORIZATION UNAVAILABLE"
+}

@@ -1,6 +1,7 @@
 """Resume a fixed 100-case Qwen API experiment, defaulting to <=10 paid requests."""
 import argparse
 import collections
+from itertools import zip_longest
 import csv
 import hashlib
 import json
@@ -31,7 +32,7 @@ def initialize(run,manifest,api_config):
         (run/name).mkdir()
     # Interleave seen/unseen and retain style order before any inference/scoring.
     by_split=[[e for e in manifest['episodes'] if e['split']==s] for s in ('val_seen','val_unseen')]
-    schedule=[e for pair in zip(*by_split) for e in pair]
+    schedule=[e for pair in zip_longest(*by_split) for e in pair if e is not None]
     frozen=dict(manifest,episodes=schedule)
     dump(run/'manifest.json',frozen);dump(run/'api_config.json',api_config)
     dump(run/'logs/provenance.json',provenance())

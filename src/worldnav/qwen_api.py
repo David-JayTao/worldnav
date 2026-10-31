@@ -96,10 +96,14 @@ class PredictionFailure(RuntimeError):
 
 
 class QwenAPIPolicy(BasePolicy):
+    allowed_models={'qwen/qwen3.8-27b'}
+    repair_instruction='Return the same planned route as valid JSON with exactly the actions key and legal finite action triples. No markdown.'
+
+    def decode_response(self,content):return parse_actions(content)
+
     def __init__(self,config,budget,client=None):
         self.config=config;self.budget=budget
-        if (config['base_url'],config['model'],config['api_key_env']) != (
-            'https://api.sinapisai.com/v1','qwen/qwen3.8-27b','SINAPISAI_API_KEY'):
+        if (config['base_url'],config['api_key_env']) != ('https://api.sinapisai.com/v1','SINAPISAI_API_KEY') or config['model'] not in self.allowed_models:
             raise ValueError('Provider, model and credential destination are fixed for this experiment')
         if config.get('format_retries',0) not in (0,1): raise ValueError('Only 0 or 1 format retry allowed')
         if not 1<=config.get('max_concurrency',1)<=4: raise ValueError('Concurrency must be 1..4')
@@ -133,8 +137,10 @@ class QwenAPIPolicy(BasePolicy):
             started=time.perf_counter()
             try:
                 with self.limiter:
+                    options={}
+                    if self.config.get('response_format') is not None:options['response_format']=self.config['response_format']
                     response=self.client.chat.completions.create(model=self.config['model'],messages=messages,
-                        temperature=self.config['temperature'],max_tokens=self.config['max_tokens'])
+                        temperature=self.config['temperature'],max_tokens=self.config['max_tokens'],**options)
                 attempt.update(api_success=True,raw_response=redact(response.model_dump(mode='json')),
                                latency_seconds=time.perf_counter()-started)
             except Exception as exc:
@@ -159,7 +165,7 @@ class QwenAPIPolicy(BasePolicy):
                 choice=response.choices[0]
                 attempt['finish_reason']=choice.finish_reason
                 if choice.finish_reason not in ('stop',None): raise ValueError('Completion did not finish normally')
-                actions=parse_actions(choice.message.content)
+                actions=self.decode_response(choice.message.content)
                 return dict(actions=actions,termination='end_of_list',peak_gpu_memory_mib=None,
                             api_record=record,retry_count=len(record['attempts'])-1)
             except (ValueError,TypeError,AttributeError,OverflowError,IndexError) as exc:
@@ -169,7 +175,7 @@ class QwenAPIPolicy(BasePolicy):
                 # Retry format only, without labels, metrics, or modified route hints.
                 previous=response.choices[0].message.content if response.choices else ''
                 messages.append({'role':'assistant','content':redact(previous or '')})
-                messages.append({'role':'user','content':'Return the same planned route as valid JSON with exactly the actions key and legal finite action triples. No markdown.'})
+                messages.append({'role':'user','content':self.repair_instruction})
                 break
 
 

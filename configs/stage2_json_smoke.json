@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "name": "native_json_capability_smoke",
+  "manifest_kind": "independent_development_sample",
+  "official_manifest_verified": false,
+  "dataset_revision": "ecf02ef425398b3cf5bd76a729fae1edd928ed98",
+  "seed": 20261031,
+  "data_root": "${WORLDNAV_DATA_ROOT}",
+  "sources": {
+    "val_seen": {
+      "snapshot_bytes": 978381967,
+      "snapshot_sha256": "89ba49d30a507ada255ed1ca33230c12606859604a6ee9beb2418b4a357fe980",
+      "archive_bytes": 7409704960,
+      "archive_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+      "archive_verified": false,
+      "catalog_episode_count": 3140,
+      "sampling_scope": "downloaded_prefix"
+    },
+    "val_unseen": {
+      "snapshot_bytes": 1133410305,
+      "snapshot_sha256": "d39036fbfa7c6cb2af7ee800c6b6bdfd101260f19d673750701c5bd8fdc77054",
+      "archive_bytes": 20311838720,
+      "archive_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+      "archive_verified": false,
+      "catalog_episode_count": 228,
+      "sampling_scope": "downloaded_prefix"
+    }
+  },
+  "episodes": [
+    {
+      "episode_id": "Feb-21-2023-soda3-intloss_00000020_0_5_0_0",
+      "split": "val_seen",
+      "trajectory_sha256": "a8ebec663d0beba2379edf3bcbce91beae8ea370ba90b2254f576642685dd85f",
+      "instruction_style": 0,
+      "metadata_offset": 361302016,
+      "metadata_size": 1232,
+      "metadata_sha256": "116e1069d1b75832409dc257b3b15f4bbc20ec92bf57fb1b12655fe42869902d",
+      "image_offset": 361150464,
+      "image_size": 5453,
+      "source_image_name": "0.jpg",
+      "image_sha256": "c1fcd1bdcf1b958620639cd159d1aa3dd42f6c3d73ee20d346335e0af819fbff"
+    }
+  ],
+  "model": {
+    "backend": "lcvn_uni",
+    "checkpoint_manifest": null,
+    "model_action_frame": "canonical_world",
+    "initial_pose_policy": "canonical_zero_experimental",
+    "max_steps": 26,
+    "memory_bank": false
+  },
+  "protocol": {
+    "max_actions": 64,
+    "max_translation": 2.46,
+    "max_abs_dyaw": 6.29
+  },
+  "evaluation": {
+    "scorer": "public_demonstration",
+    "average_step_source": "reference",
+    "failed_episodes": "excluded_and_reported"
+  },
+  "excludes_formal_trajectory_groups": true
+}

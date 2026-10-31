@@ -1,0 +1,60 @@
+"""Independent final aggregation, report and data-state records; no model requests."""
+import json,sys,re,hashlib,datetime,subprocess
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'src'),str(ROOT/'scripts')]
+from recompute_stage2 import recompute
+from compare_experiments import compare
+
+def read(p):return json.loads((ROOT/p).read_text())
+def stripped(r):return {k:v for k,v in r.items() if k!='cases'}
+def main():
+ root=Path('/data1/worldnav-data');runs={'Base':ROOT/'runs/qwen_api_100case_baseline','V3':ROOT/'runs/qwen_api_100case_optimized','Candidate':ROOT/'runs/stage2_candidate_100'}
+ result={'runs':{name:stripped(recompute(p,root)) for name,p in runs.items()},'old_Base_vs_V3':compare(runs['Base'],runs['V3']),'old_V3_vs_new':compare(runs['V3'],runs['Candidate'])}
+ result['development']={name:stripped(recompute(ROOT/f'runs/stage2_dev_{name}',root)) for name in ['scale','stop','turn','structured','json','vision'] if (ROOT/f'runs/stage2_dev_{name}/summary.json').exists()}
+ fullpaths={'Base':ROOT/'runs/stage2_full_base_100','Candidate':ROOT/'runs/stage2_full_candidate_100'}
+ if all((p/'summary.json').exists() and read(p/'summary.json')['completed_records']==100 for p in fullpaths.values()):
+  result['full_control']={'runs':{n:stripped(recompute(p,root)) for n,p in fullpaths.items()},'paired':compare(fullpaths['Base'],fullpaths['Candidate']),'independent_from_old_formal_and_dev':True}
+ for field in ['old_Base_vs_V3','old_V3_vs_new']:
+  result[field]={k:v for k,v in result[field].items() if k!='rows'}
+ if result.get('full_control'):result['full_control']['paired']={k:v for k,v in result['full_control']['paired'].items() if k!='rows'}
+ log=(ROOT/'logs/stage2_tests.txt').read_text();m=re.search(r'Ran (\d+) tests',log);assert m and '\nOK\n' in log
+ result['cpu_test_count']=int(m.group(1));result['checked_at_utc']=datetime.datetime.now(datetime.timezone.utc).isoformat()
+ (ROOT/'reports/stage2_final_metrics.json').write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
+ audits=sorted((ROOT/'outputs').glob('full_validation_audit_*.json'))
+ fullaudit=[json.loads(p.read_text()) for p in audits if json.loads(p.read_text()).get('both_validation_splits_audited')]
+ cfg=read('configs/datasets.json');splits={}
+ if fullaudit:splits=fullaudit[-1]['splits']
+ else:
+  old=ROOT/'outputs/val_seen_full_audit_20261031.json'
+  if old.exists():splits.update(json.loads(old.read_text()).get('splits',{}))
+ current={s:{'downloaded_bytes':sum(p.stat().st_size for p in [root/'archives'/(s+'.tar'),root/'archives'/(s+'.tar.part')] if p.exists()),'expected_bytes':m['size'],'expected_sha256':m['sha256'],'complete_archive_exists':(root/'archives'/(s+'.tar')).exists()} for s,m in cfg['splits'].items()}
+ dataset={'revision':cfg['revision'],'source':'https://huggingface.co/datasets/fly1113/LCVN','splits':splits,'download':current,'complete':bool(fullaudit) and all(splits[s]['image_pose_count_mismatches']==0 for s in cfg['splits']),'checked_at_utc':result['checked_at_utc'],'audit_source':str(audits[-1].relative_to(ROOT)) if audits else None}
+ dataset['manifests']={}
+ for p in ['configs/eval_100.json','configs/dev_12.json','configs/eval_100_full_stage2.json']:
+  if (ROOT/p).exists():
+   j=read(p);dataset['manifests'][p]={'sha256':hashlib.sha256((ROOT/p).read_bytes()).hexdigest(),'count':len(j['episodes']),'seed':j['seed'],'sources':j['sources'],'excluded_manifests':j.get('excluded_manifests',[])}
+ if (ROOT/'configs/eval_100_full_stage2.json').exists():
+  formal=read('configs/eval_100_full_stage2.json')['episodes'];old=read('configs/eval_100.json')['episodes'];dev=read('configs/dev_12.json')['episodes'];hashes=lambda es:{e['trajectory_sha256'] for e in es}
+  assert len(hashes(formal))==100 and not (hashes(formal)&(hashes(old)|hashes(dev)))
+  dataset['full_manifest_overlap_old_formal_or_dev']=0
+ (ROOT/'reports/stage2_data_audit.json').write_text(json.dumps(dataset,indent=2,ensure_ascii=False)+'\n')
+ text=['# WorldNav 第二阶段科研冲刺：完整实验报告','',f"证据更新时间（UTC）：{result['checked_at_utc']}。当前获分配GPU=0。API实测与CPU/Mock测试分开计数。",'','## 1. 冻结、复算与研究边界','','旧实验只读快照见 `stage2_freeze.json`，覆盖原始响应、动作、轨迹、清单、Prompt、源码和测试日志；完整SHA256索引在服务器 local_archive 对应目录。旧文件不修改。重算从逐case原始响应重新解析，与保存动作、轨迹及公开指标核对，并核验真实图片/元数据/轨迹组哈希。未发现原报告差异（浮点求和尾数差异小于1e-10）。','','Base和V3使用同100条输入；开发集与正式集轨迹哈希零交集。GT隔离由Observation边界、请求构造代码与持久化顺序测试验证；GT仅用于去重和落盘后的评测/可视化。旧正式集已被查看，本轮复用它比较新策略属于探索性结果。完整归档新清单独立排除旧正式集及开发集，是新的实验版本。','','## 2. 实验指标','','SR、Score使用计划分母，失败记零；ATE/RPE/F/H使用有效评估子集。另列有效子集SR和Score，禁止口径混用。','', '| 数据版本 / 实验 / 分组 | 有效/计划 | SR 分子/分母 | Score* | ATE | RPE | F | H | 有效Score | 有效SR |','|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|']
+ def append_rows(version,label,r):
+  for group,g in [('Overall',r['overall']),*r['per_split'].items()]:
+   m=g['valid_subset'];fmt=lambda k:f"{m[k]:.3f}" if k in m else 'NA'
+   text.append(f"| {version}/{label}/{group} | {g['valid']}/{g['planned']} | {int(g['sr_numerator'])}/{g['planned']} | {g['Score_failure_zero']:.3f} | {fmt('ATE')} | {fmt('RPE')} | {fmt('full_route_fidelity')} | {fmt('heading_turn_fidelity')} | {fmt('Score')} | {fmt('SR')} |")
+ for n,r in result['runs'].items():append_rows('旧前缀100',n,r)
+ if 'full_control' in result:
+  for n,r in result['full_control']['runs'].items():append_rows('新全归档100',n,r)
+ text+=['','## 3. 开发集策略与选择','','预注册见 `stage2_preregistration.md`；原V3不变。所有方法先跑轨迹隔离的12例开发集，唯一候选由开发集失败记零Score决定。新策略的研究假设为分段尺度、终止子句、转弯事件以及显式路线编译；没有将全体动作统一乘常数。','', '| 方法 | 有效/12 | SR | Score | API 成功/请求 | JSON合法/请求 | 输入/输出 Token | 累积API秒 |','|---|---:|---:|---:|---:|---:|---:|---:|']
+ for n,r in result['development'].items():
+  g=r['overall'];text.append(f"| {n} | {g['valid']}/12 | {int(g['sr_numerator'])}/12 | {g['Score_failure_zero']:.3f} | {r['api_success_count']}/{r['request_count']} | {r['json_valid_response_count']}/{r['request_count']} | {r['input_tokens']}/{r['output_tokens']} | {r['latency_sum_seconds']:.1f} |")
+ selection=read('reports/stage2_selection.json');text+=['',f"冻结候选：**{selection['selected']}**；开发集是否超过V3：{selection['selected_beats_V3_on_development']}。冻结时间（UTC）{selection['frozen_at_utc']}；配置SHA256 `{selection['config_sha256']}`。12例反复开发与多重候选选择造成选择偏差，不能外推。",'','Robust JSON使用原V3文本和response_format=json_object；单例真实图片请求返回合法结果。服务接受参数不等于确认强制schema或证明参数未被忽略。严格解析与有限重试没有放宽。结构化策略先产生地标、转角、距离和步幅，独立编译器严格细分到动作；非法字段、非有限值或超过64步均记失败，不截断、不补全、不伪装Stop。','','额外模型为官方明确支持图像输入的Qwen3-VL-32B-Instruct，经同SinapisAI真实RGB请求测试。它不参与Qwen3.8策略选型；模型身份依赖服务方路由，无法独立验证服务器权重。官方来源：https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct。','','## 4. 配对统计']
+ for label,p in [('旧Base→V3',result['old_Base_vs_V3']),('旧V3→新候选',result['old_V3_vs_new'])]+([('新完整归档Base→候选',result['full_control']['paired'])] if 'full_control' in result else []):
+  text+=['',f"- {label}：ΔScore={p['score_mean_delta']:.6f}；95% paired bootstrap CI={p['paired_bootstrap_95ci']}；改善/下降/持平={p['improved']}/{p['worsened']}/{p['tied']}；SR新增/丢失={p['sr_gained']}/{p['sr_lost']}；split差值={p['per_split']}。"]
+ text+=['','固定种子20261031、5000次配对重采样；区间只反映该样本集重采样波动，不保证完整验证集泛化。两种数据版本不混算、不直接相减。','','## 5. 深入诊断与真实案例','','`stage2_deep_analysis.json`包括Overall、seen/unseen、指令类型、参考步数区间、参考长度区间及文件名场景代理分组。输出分布包含动作数量、预测/参考长度、逐例长度比、终点/朝向误差、转弯次数与进度、动作幅度。场景前缀不是经过验证的物理场景标签；终点投影与转弯匹配仅为几何诊断代理，不能当语义错误真值。','','7组确定性案例规则覆盖最大改善、最大终点偏差、尺度异常、转弯偏差代理、停止越界代理、格式失败及SR与轨迹保真度不一致。`outputs/stage2_analysis/*_details.json`保留真实输入指令、GT、预测动作/轨迹、原始响应；各case指标在CSV/JSON中。PPT展示改善和失败两例，不仅展示成功。','','## 6. 数据与可信度','',f"固定来源revision `{cfg['revision']}`；下载实际字节、SHA256、归档与逐图审计见 `stage2_data_audit.json`。完整审计是否通过：**{dataset['complete']}**。没有下载完整训练集；旧前缀清单保留不覆盖。",'','新完整归档清单按拥有三类指令的轨迹组抽样，50/50、风格17/17/16；排除旧正式集和开发集。此为符合资格轨迹组的分层局部100例，不能称为所有episode等概率样本或完整全量评测。','','## 7. 工程测试与异常','',f"{result['cpu_test_count']}项CPU/Mock测试通过，原72项无退化。测试名称与完整输出在本地 logs/stage2_tests.txt；API请求不计入单测。修复了单split smoke初始化遗漏、空split汇总除零以及旧matplotlib参数兼容问题。JSON smoke的汇总异常通过离线恢复解决，没有重新收费请求；完整异常日志保留。",'','长任务均有独立tmux、日志、有限预算和重试、原子case落盘及完成case跳过。单runner最多3并发，JSON smoke与之合计最多4；完整归档对照等待旧候选结束，避免并发叠加。新进程结束日志保存CPU时间与峰值RSS。旧实验未覆写。','','## 8. 模型与资源阻塞','','Cosmos Reason2-8B: **NOT RUN / AUTHORIZATION UNAVAILABLE**。最新目录仍无Sinapis路由；NVIDIA匿名真实图片请求401，公开Space为PAUSED。无现有NVIDIA凭据，不将SinapisKey发到NVIDIA。GPU分配0，未启动CUDA或CPU完整8B推理。LCVN缺已验证任务checkpoint。详见 `stage2_model_access.json`；官方接口来源：https://docs.nvidia.com/nim/vision-language-models/1.7.0/examples/cosmos-reason2/api.html。','','## 9. 结论与下一步','','本轮正负结果均按开发集冻结后实测报告；重点关注结构化表示是否改善几何误差、是否牺牲有效率或朝向，而非只挑最高SR。下一步扩大独立开发集，在新测试版本验证地标约束的距离与终止规划；获取合法Cosmos endpoint和LCVN匹配权重后才进行对应模型实测。公开demo指标不是CodaBench比赛成绩。','','## 10. 原始证据与复现','','- 旧实验：runs/qwen_api_100case_baseline、runs/qwen_api_100case_optimized。','- 新开发集：runs/stage2_dev_{scale,stop,turn,structured,json,vision}。','- 冻结选择与旧集候选：runs/stage2_selection.json、runs/stage2_candidate_100。','- 全归档新集：configs/eval_100_full_stage2.json、runs/stage2_full_{base,candidate}_100。','- 数据下载和图像审计：logs/stage2_data_download.txt、outputs/full_validation_audit_*.json。','- 报告和演示：reports/stage2_*、WorldNav_科研冲刺汇报_20261031_v2.pptx。','- Git只提交脱敏汇总、源码、配置、报告和必要演示；原始预测、API响应、数据、私密日志仅服务器保存。']
+ (ROOT/'reports/stage2_experiment_report.md').write_text('\n'.join(text)+'\n')
+ # Public list of test names/results, excluding any private execution logs.
+ (ROOT/'reports/stage2_cpu_tests.txt').write_text(log)
+ print('Final independent replay and report written. CPU tests:',result['cpu_test_count'],'full control:',bool(result.get('full_control')))
+if __name__=='__main__':main()

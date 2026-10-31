@@ -10,6 +10,7 @@ import sys
 import time
 import os
 import collections
+import resource
 sys.path[:0]=[str(Path(__file__).resolve().parents[1]/'src'),str(Path(__file__).resolve().parent)]
 from worldnav.data import load_observation
 from worldnav.data import load_reference
@@ -18,6 +19,7 @@ from worldnav.geometry import integrate
 from worldnav.prompts import get_prompt
 from worldnav.qwen_api import QwenAPIPolicy,RequestBudget,encode_image,parse_actions
 from worldnav.runner import dump,provenance
+from worldnav.research_policy import make_policy
 from run_qwen_api import initialize,execute_case,key,summarize,update
 
 
@@ -85,7 +87,7 @@ def sprint_summary(run,manifest,budget,cfg):
              for a in json.loads(p.read_text()).get('attempts',[])]
     all_attempts=historical+current
     success_count=sum(a['api_success'] for a in all_attempts)
-    result.update(experiment_id=run.name,prompt_version=cfg['prompt_version'],
+    result.update(experiment_id=run.name,model=cfg['model'],prompt_version=cfg['prompt_version'],
         reused_cases=len(reused),current_run_reserved_requests=budget.used,
         inherited_requests=reused_attempts,all_inference_request_count=denominator,
         api_success_requests=success_count,api_request_success_rate=success_count/denominator if denominator else None,
@@ -104,8 +106,8 @@ def sprint_summary(run,manifest,budget,cfg):
         n=sum(e['split']==split for e in manifest['episodes'])
         selected=[r for r in rows if r['split']==split]
         group['planned']=n
-        group['score_all_planned_failure_zero']=sum((r['evaluation_metrics'] or {}).get('Score',0) for r in selected)/n
-        group['sr_all_planned_failure_zero']=sum((r['evaluation_metrics'] or {}).get('SR',0) for r in selected)/n
+        group['score_all_planned_failure_zero']=sum((r['evaluation_metrics'] or {}).get('Score',0) for r in selected)/n if n else None
+        group['sr_all_planned_failure_zero']=sum((r['evaluation_metrics'] or {}).get('SR',0) for r in selected)/n if n else None
     update(run/'summary.json',result)
     update(run/'remaining_tasks.json',dict(episodes=[e for e in manifest['episodes'] if not (run/'cases'/(key(e)+'.json')).exists()],
         note='Resume the frozen experiment; completed cases are never requested again.'))
@@ -122,7 +124,10 @@ def recover_persisted_response(run,item,root,metric):
     try:
         choice=raw['choices'][0]
         if choice.get('finish_reason') not in ('stop',None):return False
-        actions=parse_actions(choice['message']['content'])
+        from worldnav.trajectory_plan import compile_plan
+        config=json.loads((run/'api_config.json').read_text())
+        decoder=compile_plan if config.get('policy_kind')=='structured_route' else parse_actions
+        actions=decoder(choice['message']['content'])
     except (KeyError,IndexError,ValueError,TypeError):return False
     prediction=dict(split=item['split'],episodes=[dict(episode_id=item['episode_id'],actions=actions)])
     p=run/'predictions'/(name+'.json')
@@ -176,7 +181,7 @@ def main():
     with (args.run_dir/'logs/runner.lock').open('a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         update(args.run_dir/'logs/process.json',dict(pid=os.getpid(),started_unix=time.time(),state='running'))
-        policy=QwenAPIPolicy(cfg,budget);metric=load_metrics()
+        policy=make_policy(cfg,budget);metric=load_metrics()
         pending=[]
         for index,item in enumerate(manifest['episodes']):
             case=args.run_dir/'cases'/(key(item)+'.json')
@@ -196,7 +201,7 @@ def main():
                 print(json.dumps(dict(episode_id=row['episode_id'],status=row['status'],
                     completed=result['completed_records'],evaluated=result['evaluated_cases'],requests=budget.used)),flush=True)
         print(json.dumps(sprint_summary(args.run_dir,manifest,budget,cfg),indent=2),flush=True)
-        update(args.run_dir/'logs/process.json',dict(pid=os.getpid(),finished_unix=time.time(),state='complete'))
+        update(args.run_dir/'logs/process.json',dict(pid=os.getpid(),finished_unix=time.time(),state='complete',max_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,cpu_user_seconds=resource.getrusage(resource.RUSAGE_SELF).ru_utime,cpu_system_seconds=resource.getrusage(resource.RUSAGE_SELF).ru_stime))
 
 
 if __name__=='__main__':main()

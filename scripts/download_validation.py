@@ -66,7 +66,7 @@ def download(split, metadata, revision, root):
             print(f"{split}: attempt {attempt+1} failed: {type(exc).__name__}; partial preserved", flush=True)
             if attempt == 3:
                 raise
-            time.sleep(2)
+            time.sleep(min(30, 2**(attempt+1)))
     if not partial.exists() or partial.stat().st_size != size:
         raise ValueError(f"{split}: incomplete archive; partial preserved")
     actual = sha256(partial)

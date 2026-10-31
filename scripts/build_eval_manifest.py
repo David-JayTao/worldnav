@@ -98,10 +98,12 @@ def main():
     parser.add_argument('--output',type=Path,default=ROOT/'configs/eval_100.json')
     parser.add_argument('--seed',type=int,default=20261030)
     parser.add_argument('--allow-partial',action='store_true',help='Explicitly mark sampling from downloaded prefixes, not a full-split uniform sample')
+    parser.add_argument("--exclude-manifest",action="append",type=Path,default=[],help="Exclude all trajectory groups from these development/previous manifests")
     args=parser.parse_args()
     metadata=json.loads((ROOT/'configs/datasets.json').read_text())
     previous=json.loads(args.output.read_text()) if args.output.exists() else None
     if previous and previous['seed']!=args.seed: raise ValueError('Use a different output file for a new seed')
+    excluded={e["trajectory_sha256"] for file in args.exclude_manifest for e in json.loads(file.read_text())["episodes"]}
     sources={}; episodes=[]
     for i,split in enumerate(['val_seen','val_unseen']):
         full=args.data_root/'archives'/(split+'.tar')
@@ -114,7 +116,9 @@ def main():
         verified=size==total and digest==metadata['splits'][split]['sha256']
         if size==total and not verified: raise ValueError('Full archive checksum mismatch')
         rows=catalog(path,split,size)
-        selected=choose(rows,args.seed+i)
+        eligible=[row for row in rows if row["trajectory_sha256"] not in excluded]
+        selected=choose(eligible,args.seed+i)
+        excluded.update(row["trajectory_sha256"] for row in selected)
         materialize(path,selected,args.data_root)
         episodes.extend(selected)
         sources[split]=dict(snapshot_bytes=size,snapshot_sha256=digest,archive_bytes=total,
@@ -128,6 +132,7 @@ def main():
                    initial_pose_policy='canonical_zero_experimental',max_steps=26,memory_bank=False),
         protocol=dict(max_actions=64,max_translation=2.46,max_abs_dyaw=6.29),
         evaluation=dict(scorer='public_demonstration',average_step_source='reference',failed_episodes='excluded_and_reported'))
+    if args.exclude_manifest:config["excluded_manifests"]=[str(p) for p in args.exclude_manifest]
     content=(json.dumps(config,indent=2,ensure_ascii=False)+'\n').encode()
     save_unchanged(args.output,content)
     print('Manifest SHA256:',hashlib.sha256(content).hexdigest())

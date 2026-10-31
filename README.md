@@ -7,7 +7,7 @@ RoboWorld 2026 Track 1：根据一张初始 RGB 和一句导航指令，预测�
 - 已跑通真实图片 API → 严格动作解析 → 当前机体坐标积分 → 官方公开指标 → 逐样本结果和轨迹图。
 - 固定本地 100-case：50 seen、50 unseen、100 个不同轨迹内容哈希，各 split 风格 17/17/16。数据来自冻结归档前缀，不代表完整验证集均匀抽样。
 - 独立开发集 12 条：两 split 各 6、各风格 2，与正式集轨迹组完全不重叠；V1/V2/V3 Prompt 只在开发集选型。
-- seen 全包通过大小、SHA256 和逐图审计：10,806 episode、189,873 图片；unseen 后台续传。原有数据和实验均保留。
+- seen 全包通过大小、SHA256 和逐图审计：10,806 episode、189,873 图片；unseen 本轮恢复续传并进行完整审计，最新状态见第二阶段报告。原有数据和实验均保留。
 - Cosmos：当前 SinapisAI 无路由，NVIDIA 无现有授权且匿名图片请求 401；公开 Space 暂停。尚无 Cosmos 导航分数。
 - LCVN-Uni：缺少已确认的导航训练 checkpoint；本地适配未经过真实 GPU 验证。
 - API Zero-shot 结果不是官方 LCVN-Uni baseline，公开指标也不宣称等同于私有评分器。
@@ -54,4 +54,12 @@ CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 "$HOME/.venv/bin/python" scrip
 
 PPT 为原生可编辑元素、真实图片和轨迹图，路径：`reports/WorldNav_阶段进展汇报_20261031.pptx`；完整报告和逐页讲稿同目录。重建会归档旧版本。
 
-详见 [复现指南](docs/REPRODUCTION.md)、[协议核查](docs/PROTOCOL_AUDIT.md)、[项目状态](docs/PROJECT_STATUS.md)、[权重和环境](docs/CHECKPOINT_AND_ENVIRONMENT.md)。仅做本地 Git 提交，本轮禁止自动推送公开仓库。
+详见 [复现指南](docs/REPRODUCTION.md)、[协议核查](docs/PROTOCOL_AUDIT.md)、[项目状态](docs/PROJECT_STATUS.md)、[权重和环境](docs/CHECKPOINT_AND_ENVIRONMENT.md)。按最新授权，在核对远端无冲突并通过公开内容审计后正常推送；禁止强制推送。
+
+
+## 第二阶段科研冲刺
+
+- 现场审计：[服务器报告](reports/server_audit_20261031.md)。
+- 旧实验冻结与独立重算：[快照索引](reports/stage2_freeze.json)、[重算汇总](reports/stage2_recomputed_metrics.json)。
+- 新策略在独立开发集先比较，参见 [预注册](reports/stage2_preregistration.md)。研究尺度、停止、转弯、结构化路线编译及JSON可靠性；不修改旧V3配置。
+- 原始响应与预测仅本地保存；Git保留脱敏报告与演示。新全归档100-case是独立版本，不与旧前缀样本混算。
