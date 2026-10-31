@@ -1,0 +1,28 @@
+{
+  "dataset_revision": "ecf02ef425398b3cf5bd76a729fae1edd928ed98",
+  "splits": {
+    "val_seen": {
+      "instruction_specific_episode_dirs": 10806,
+      "distinct_trajectory_content_groups": 3602,
+      "groups_with_all_three_instruction_styles": 3602,
+      "style_episode_counts": {
+        "0": 3602,
+        "1": 3602,
+        "2": 3602
+      },
+      "archive_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1"
+    },
+    "val_unseen": {
+      "instruction_specific_episode_dirs": 4500,
+      "distinct_trajectory_content_groups": 1500,
+      "groups_with_all_three_instruction_styles": 1500,
+      "style_episode_counts": {
+        "0": 1500,
+        "1": 1500,
+        "2": 1500
+      },
+      "archive_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55"
+    }
+  },
+  "note": "Image audit counts files (including repetition across instruction variants), not unique physical views. Group IDs use position/yaw content hashes."
+}

@@ -9,6 +9,7 @@ while [ "$count" -lt 180 ]; do
     count=$((count + 1)); sleep 20
 done
 if [ "$count" -ge 180 ]; then echo 'Reached bounded readiness wait.'; exit 1; fi
+"$py" -c 'import json,sys,pathlib; rows=[a for p in pathlib.Path("runs/stage2_candidate_100/raw_responses").glob("*.json") for a in json.load(open(p)).get("attempts",[])]; sys.exit(1 if any(a.get("http_status") in (401,402,403) for a in rows) else 0)'
 for variant in base candidate; do
     run="runs/stage2_full_${variant}_100"
     if [ "$variant" = base ]; then config=configs/stage2_full_base.json; else config=configs/stage2_candidate_100.json; fi

@@ -132,7 +132,10 @@ class QwenAPIPolicy(BasePolicy):
             raise PredictionFailure('provider_authorization_or_credit_blocked',record)
         for retry in range(self.config.get('format_retries',0)+1):
           for network_retry in range(self.config.get('network_retries',0)+1):
-            number=self.budget.reserve()
+            try:number=self.budget.reserve()
+            except RuntimeError:
+                record['budget_exhausted']=True
+                raise PredictionFailure('request_budget_exhausted',record) from None
             attempt={'request_number':number,'retry_index':retry,'network_retry':network_retry,'api_success':False}
             started=time.perf_counter()
             try:

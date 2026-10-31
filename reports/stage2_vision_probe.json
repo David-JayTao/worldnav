@@ -1,0 +1,10 @@
+{
+  "reason": "Optional vision route: at least three terminal API failures after bounded retries; stop further paid requests",
+  "completed_cases": 3,
+  "valid_cases": 0,
+  "reserved_requests": 12,
+  "recorded_requests": 9,
+  "unresolved_reserved_requests": 3,
+  "warning": "In-flight requests interrupted; charges/provider completion unknown. Do not label unresolved requests as model predictions.",
+  "stopped_at_unix": 1793421736.4909246
+}

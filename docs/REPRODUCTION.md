@@ -107,3 +107,8 @@ sh scripts/run_api_sprint.sh --manifest configs/eval_100.json --api-config confi
 - 最终复算：`scripts/finalize_stage2.py`，写最终指标、数据审计摘要与Markdown；`scripts/build_stage2_ppt.py`生成13页可编辑PPT和讲稿、数据来源。
 
 所有Python入口使用已存在的独立API环境；CUDA_VISIBLE_DEVICES留空。原始证据位于runs/outputs/logs，Git只提交脱敏汇总，不上传原始预测或原始API响应。NVIDIA认证不可用时Cosmos记NOT RUN，不使用Sinapis密钥跨服务商请求。计费货币价格未知，仅统计实际请求与Token，不估造账单。
+
+
+补充固定V3参照：`scripts/run_stage2_full_v3.sh`在完整归档Base与Turn结束后运行相同新清单的固定V3，不修改旧V3文本。它在旧集Turn增量CI跨零之后补充，不能称为起初预注册的设计；增加参照不参与新候选选择。
+
+额外视觉路由：32B的三条样本各耗尽有限网络重试仍失败后受控停止，9次有记录的失败请求、3个未决预算槽保留；不把未决请求标为预测结果。`scripts/probe_stage2_vision8.sh`在三组完整归档实验结束后，用现有同服务商授权对官方声明视觉输入的8B做单例smoke，成功才做12例；45秒超时、网络重试0，不进行未经选择的正式100例，不与主实验并发叠加。

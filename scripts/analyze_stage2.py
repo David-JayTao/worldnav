@@ -31,6 +31,7 @@ def inspect(run,root):
   if not p.exists():continue
   row=json.loads(p.read_text());ref=load_reference(root,item);rxy,ryaw=canonical_reference(ref['position'],ref['yaw']);ra=reference_actions(ref['position'],ref['yaw']);rl=length(rxy)
   eid=item['episode_id'];scene=re.sub(r'^[A-Z][a-z]{2}-\d{2}-\d{4}-','',eid).split('_')[0]
+  if re.match(r'^\d{8}_',eid):scene='_'.join(eid.split('_')[:2])
   out={'episode_id':eid,'split':item['split'],'style':item['instruction_style'],'scene_filename_proxy':scene,'valid':row['prediction_valid'],'reference_steps':len(ra),'reference_length':rl,'step_bin':'<=10' if len(ra)<=10 else ('11-20' if len(ra)<=20 else '>20'),'length_bin':'<=3' if rl<=3 else ('3-7' if rl<=7 else '>7'),'Score':0,'SR':0,'failure':row['failure_category']}
   raw=json.loads((run/'raw_responses'/(name+'.json')).read_text());content=raw.get('attempts',[])
   details[name]={'item':item,'reference_xy':rxy,'reference_yaw':ryaw,'instruction':load_observation(root,item).instruction,'raw_responses':content,'predicted_xy':None,'actions':None}
@@ -67,11 +68,11 @@ def analyze():
  fig,axes=plt.subplots(2,3,figsize=(13,7))
  for ax,field,title,unit in zip(axes.flat,['predicted_steps','path_length_ratio','endpoint_error','heading_error','turn_progress_proxy','predicted_length'],['Predicted actions','Per-case path length ratio','Endpoint error','Final heading error','Turn progress mismatch proxy','Predicted path length'],['count','ratio','dataset units','rad','normalized progress + sign penalty','dataset units']):
   values=[[r[field] for r in allrows[label] if r['valid'] and r.get(field) is not None] for label in runs]
-  ax.boxplot(values,labels=list(runs),showfliers=True);ax.set_title(title,fontsize=10);ax.set_ylabel(unit);ax.grid(axis='y',alpha=.2)
+  ax.boxplot(values,labels=[('Turn' if label=='New' else label) for label in runs],showfliers=True);ax.set_title(title,fontsize=10);ax.set_ylabel(unit);ax.grid(axis='y',alpha=.2)
  fig.suptitle('Paired local 100-case diagnostics; valid subsets shown');fig.tight_layout();fig.savefig(out/'error_distributions.png',dpi=170);plt.close(fig)
  fig,ax=plt.subplots(figsize=(9,4))
  for label,rows in allrows.items():
-  vals=[v for r in rows if r['valid'] for v in r['amplitudes']];ax.hist(vals,bins=np.linspace(0,2.46,25),histtype='step',density=True,label=label)
+  vals=[v for r in rows if r['valid'] for v in r['amplitudes']];ax.hist(vals,bins=np.linspace(0,2.46,25),histtype='step',density=True,label=('Turn' if label=='New' else label))
  ax.set(xlabel='Translation magnitude / dataset units',ylabel='Density',title='Action amplitude distribution; rotation-only steps included');ax.legend();ax.grid(alpha=.2);fig.tight_layout();fig.savefig(out/'action_amplitudes.png',dpi=170);plt.close(fig)
  a={r['split']+'__'+r['episode_id']:r for r in allrows['Base']};b={r['split']+'__'+r['episode_id']:r for r in allrows['V3']};valid=[k for k in b if b[k]['valid']]
  roles={'largest_score_gain':max(valid,key=lambda k:b[k]['Score']-a[k]['Score']),'worst_endpoint':max(valid,key=lambda k:b[k]['endpoint_error']),'worst_scale_ratio':max(valid,key=lambda k:abs(math.log(max(b[k]['path_length_ratio'] or 0,1e-12)))),'turn_mismatch_proxy':max(valid,key=lambda k:b[k]['turn_progress_proxy']),'stop_overshoot_proxy':max(valid,key=lambda k:b[k]['terminal_projection_proxy'])}
@@ -86,14 +87,36 @@ def analyze():
   for label in runs:
    xy=alldetails[label][k]['predicted_xy']
    if xy:
-    xy=np.asarray(xy);axes[1].plot(xy[:,0],xy[:,1],'-x',ms=3,label=label)
+    xy=np.asarray(xy);axes[1].plot(xy[:,0],xy[:,1],'-x',ms=3,label=('Turn' if label=='New' else label))
   axes[1].axis('equal');axes[1].grid(alpha=.2);axes[1].legend(fontsize=8);axes[1].set(xlabel='X / dataset units',ylabel='Y / dataset units',title='Current-body action integration')
   metrics=' | '.join(f"{label}: SR={next(r for r in allrows[label] if r['episode_id']==d['item']['episode_id'] and r['split']==d['item']['split'])['SR']} Score={next(r for r in allrows[label] if r['episode_id']==d['item']['episode_id'] and r['split']==d['item']['split'])['Score']:.2f}" for label in runs)
   fig.suptitle(role+': '+d['item']['episode_id']+'\n'+metrics,fontsize=10)
   fig.text(.02,.02,textwrap.fill(d['instruction'],110),fontsize=8);fig.tight_layout(rect=(0,.14,1,.9));path=out/(role+'.png');fig.savefig(path,dpi=150);plt.close(fig)
-  selections.append({'role':role,'case_key':k,'file':str(path.relative_to(ROOT)),'instruction':d['instruction'],'Base_Score':a[k]['Score'],'V3_Score':b[k]['Score'],'interpretation':'deterministic diagnostic selection; geometric proxy is not a semantic failure label'})
+  if role in ('largest_score_gain','worst_endpoint'):
+   compact,ca=plt.subplots(1,2,figsize=(6,3.0),gridspec_kw={'width_ratios':[1,1.2]})
+   ca[0].imshow(obs.image);ca[0].axis('off');ca[0].set_title('Initial RGB',fontsize=10)
+   ca[1].plot(rxy[:,0],rxy[:,1],'-o',ms=2,color='black',label='GT')
+   for label in runs:
+    points=alldetails[label][k]['predicted_xy']
+    if points:
+     points=np.asarray(points);ca[1].plot(points[:,0],points[:,1],'-x',ms=2,label=('Turn' if label=='New' else label))
+   ca[1].axis('equal');ca[1].grid(alpha=.2);ca[1].legend(fontsize=8);ca[1].set_xlabel('X / data units',fontsize=9);ca[1].set_ylabel('Y / data units',fontsize=9);ca[1].tick_params(labelsize=8)
+   compact.tight_layout();compact.savefig(out/(role+'_ppt.png'),dpi=200);plt.close(compact)
+  selections.append({'role':role,'case_key':k,'file':str(path.relative_to(ROOT)),'instruction':d['instruction'],'Base_Score':a[k]['Score'],'V3_Score':b[k]['Score'],'Turn_Score':next((r['Score'] for r in allrows.get('New',[]) if r['split']+'__'+r['episode_id']==k),None),'interpretation':'deterministic diagnostic selection; geometric proxy is not a semantic failure label'})
  (out/'gallery.json').write_text(json.dumps(selections,ensure_ascii=False,indent=2))
- public={'source':'raw response parsed, saved actions compared, public metrics independently recomputed','GT_used_only_for_post_prediction_analysis':True,'turn_proxy':'symmetric nearest normalized-progress turn difference, +0.5 penalty for opposite yaw sign; threshold |dyaw|>=0.2rad; not semantic turn correctness','stop_proxy':'endpoint residual projected on final reference displacement; not semantic stop correctness','scene_proxy':'filename prefix, not verified physical scene labels','runs':summaries,'gallery':selections}
+ common=set(alldetails['Base'])
+ for label in runs:common&={k for k,d in alldetails[label].items() if d['predicted_xy'] is not None}
+ common_means={label:aggregate([r for r in rows if r['split']+'__'+r['episode_id'] in common]) for label,rows in allrows.items()}
+ public={'paired_common_valid_count':len(common),'paired_common_valid':common_means,'source':'raw response parsed, saved actions compared, public metrics independently recomputed','GT_used_only_for_post_prediction_analysis':True,'turn_proxy':'symmetric nearest normalized-progress turn difference, +0.5 penalty for opposite yaw sign; threshold |dyaw|>=0.2rad; not semantic turn correctness','stop_proxy':'endpoint residual projected on final reference displacement; not semantic stop correctness','scene_proxy':'filename prefix, not verified physical scene labels','runs':summaries,'gallery':selections}
+ full_runs={}
+ for label,name in [('FullBase','stage2_full_base_100'),('FullCandidate','stage2_full_candidate_100'),('FullV3','stage2_full_v3_100')]:
+  run=ROOT/'runs'/name
+  if not (run/'summary.json').exists() or json.loads((run/'summary.json').read_text())['completed_records']!=100:continue
+  rows,_=inspect(run,root)
+  groups={f:{str(k):aggregate([r for r in rows if r[f]==k]) for k in sorted(set(r[f] for r in rows),key=str)} for f in ['split','style','scene_filename_proxy','step_bin','length_bin']}
+  full_runs[label]={'overall':aggregate(rows),'groups':groups}
+  (out/(label+'_cases.json')).write_text(json.dumps(rows,ensure_ascii=False,indent=2))
+ public['full_archive_runs']=full_runs
  (ROOT/'reports/stage2_deep_analysis.json').write_text(json.dumps(public,ensure_ascii=False,indent=2)+'\n')
  print('Wrote diagnostics and',len(selections),'real paired case figures. No API calls.')
 if __name__=='__main__':analyze()

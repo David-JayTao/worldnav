@@ -39,7 +39,7 @@ def prepare(run,manifest_path,config_path,root):
     dump(run/'experiment.json',identity)
     # Keep exact source text, not only dirty Git hashes, for every new experiment.
     code={str(p.relative_to(Path.cwd())):p.read_text() for folder in ('src','scripts')
-          for p in (Path.cwd()/folder).rglob('*.py')}
+          for p in (Path.cwd()/folder).rglob('*') if p.is_file() and p.suffix in ('.py','.sh')}
     dump(run/'logs/source_snapshot.json',code)
     return frozen,cfg
 

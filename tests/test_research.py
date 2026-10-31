@@ -87,3 +87,14 @@ class ResearchPolicyTests(unittest.TestCase):
   xy,yaw=integrate(actions);other,heading=integrate(subdivide(actions))
   self.assertAlmostEqual(xy[-1][0],other[-1][0]);self.assertAlmostEqual(xy[-1][1],other[-1][1]);self.assertAlmostEqual(yaw[-1],heading[-1])
   self.assertAlmostEqual(sum(math.dist(a,b) for a,b in zip(xy,xy[1:])),sum(math.dist(a,b) for a,b in zip(other,other[1:])))
+
+ def test_budget_exhaustion_retains_already_billed_response(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   cfg=config();cfg['format_retries']=1
+   client=FakeClient([Response('invalid JSON')]);budget=RequestBudget(Path(tmp)/'ledger',1)
+   with self.assertRaises(PredictionFailure) as caught:
+    make_policy(cfg,budget,client).predict(Observation(Image.new('RGB',(3,3)),'Go'))
+   self.assertEqual(caught.exception.category,'request_budget_exhausted')
+   self.assertEqual(len(caught.exception.record['attempts']),1)
+   self.assertTrue(caught.exception.record['attempts'][0]['api_success'])
+   self.assertEqual(client.calls[0]['model'],cfg['model']);self.assertEqual(budget.used,1)

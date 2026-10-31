@@ -4,7 +4,7 @@ cd "$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 py="${WORLDNAV_API_PYTHON:-$HOME/.venv/bin/python}"
 count=0
 while [ "$count" -lt 360 ]; do
-    if "$py" -c 'import json; assert json.load(open("runs/stage2_full_candidate_100/summary.json"))["completed_records"]==100' 2>/dev/null && ! tmux has-session -t worldnav_stage2_data 2>/dev/null; then break; fi
+    if "$py" -c 'import json; assert json.load(open("runs/stage2_full_v3_100/summary.json"))["completed_records"]==100' 2>/dev/null && ! tmux has-session -t worldnav_stage2_data 2>/dev/null && ! tmux has-session -t worldnav_stage2_vision8 2>/dev/null; then break; fi
     count=$((count + 1)); sleep 20
 done
 if [ "$count" -ge 360 ]; then echo 'Delivery readiness exceeded bounded two-hour wait.'; exit 1; fi
