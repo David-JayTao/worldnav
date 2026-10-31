@@ -1,0 +1,115 @@
+{
+  "experiment": "Qwen API Zero-shot Policy (not LCVN-Uni)",
+  "model": "qwen/qwen3.8-27b",
+  "dataset_manifest_sha256": "fc703d792aa63d5f5f9e3677210725b1124700e62a9718fa5c983d85bc06d8e3",
+  "manifest_kind": "local_validation_sample",
+  "sources": {
+    "val_seen": {
+      "snapshot_bytes": 978381967,
+      "snapshot_sha256": "89ba49d30a507ada255ed1ca33230c12606859604a6ee9beb2418b4a357fe980",
+      "archive_bytes": 7409704960,
+      "archive_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+      "archive_verified": false,
+      "catalog_episode_count": 3140,
+      "sampling_scope": "downloaded_prefix"
+    },
+    "val_unseen": {
+      "snapshot_bytes": 1133410305,
+      "snapshot_sha256": "d39036fbfa7c6cb2af7ee800c6b6bdfd101260f19d673750701c5bd8fdc77054",
+      "archive_bytes": 20311838720,
+      "archive_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+      "archive_verified": false,
+      "catalog_episode_count": 228,
+      "sampling_scope": "downloaded_prefix"
+    }
+  },
+  "planned_cases": 100,
+  "attempted_cases": 100,
+  "completed_records": 100,
+  "evaluated_cases": 100,
+  "valid_predictions": 100,
+  "unknown_interrupted_cases": 0,
+  "reserved_api_requests": 93,
+  "recorded_api_requests": 102,
+  "api_success_requests": 101,
+  "api_request_success_rate": 0.9901960784313726,
+  "legal_prediction_rate": 1.0,
+  "evaluation_coverage_among_attempted": 1.0,
+  "evaluation_coverage_of_100": 1.0,
+  "failure_counts": {},
+  "overall": {
+    "attempted": 100,
+    "evaluated": 100,
+    "metrics_on_evaluated": {
+      "SR": 0.05,
+      "ATE": 7.192826680214575,
+      "RPE": 0.9429648033573127,
+      "full_route_fidelity": 0.14985721623678672,
+      "heading_turn_fidelity": 0.7826191720960662,
+      "Score": 11.040168220677106
+    },
+    "score_failure_zero": 11.040168220677106,
+    "sr_failure_zero": 0.05,
+    "score_all_planned_failure_zero": 11.040168220677106,
+    "sr_all_planned_failure_zero": 0.05
+  },
+  "per_split": {
+    "val_seen": {
+      "attempted": 50,
+      "evaluated": 50,
+      "metrics_on_evaluated": {
+        "SR": 0.06,
+        "ATE": 6.936935987676794,
+        "RPE": 0.9895049930146226,
+        "full_route_fidelity": 0.06656650195853003,
+        "heading_turn_fidelity": 0.6442374090349416,
+        "Score": 4.41930977282222
+      },
+      "score_failure_zero": 4.41930977282222,
+      "planned": 50,
+      "score_all_planned_failure_zero": 4.41930977282222,
+      "sr_all_planned_failure_zero": 0.06
+    },
+    "val_unseen": {
+      "attempted": 50,
+      "evaluated": 50,
+      "metrics_on_evaluated": {
+        "SR": 0.04,
+        "ATE": 7.4487173727523555,
+        "RPE": 0.8964246137000028,
+        "full_route_fidelity": 0.23314793051504343,
+        "heading_turn_fidelity": 0.9210009351571906,
+        "Score": 17.66102666853199
+      },
+      "score_failure_zero": 17.66102666853199,
+      "planned": 50,
+      "score_all_planned_failure_zero": 17.66102666853199,
+      "sr_all_planned_failure_zero": 0.04
+    }
+  },
+  "total_input_tokens": 61135,
+  "total_output_tokens": 155358,
+  "total_api_latency_seconds": 3465.294800942298,
+  "scorer": "pinned_public_demonstration",
+  "private_scorer_equivalence_verified": false,
+  "average_step_source": "reference",
+  "cost": null,
+  "price_and_account_allowance_verified": false,
+  "gpu_used": false,
+  "official_submission_ready": false,
+  "stop_reason": "complete",
+  "unknown_usage_successful_requests": 0,
+  "provider_reported_output_above_requested_max": 4,
+  "experiment_id": "qwen_api_100case_baseline",
+  "prompt_version": "qwen_worldnav_zero_shot_v1",
+  "reused_cases": 9,
+  "current_run_reserved_requests": 93,
+  "inherited_requests": 9,
+  "all_inference_request_count": 102,
+  "spending_authorization": "worldnav_sprint_20261031",
+  "historical_request_count": 0,
+  "intermediate_parse_failure_count": 1,
+  "request_failure_counts": {
+    "APITimeoutError": 1
+  }
+}

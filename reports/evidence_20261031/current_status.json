@@ -1,0 +1,11 @@
+{
+  "checked_at_beijing": "2026-10-31T11:42:11.106958+08:00",
+  "val_unseen_downloaded_bytes": 17656210943,
+  "val_unseen_expected_bytes": 20311838720,
+  "percent": 86.92571453718199,
+  "archive_complete": false,
+  "download_running": false,
+  "last_failure": "Connection refused; stopped after eight bounded resume cycles",
+  "gpu_allocated": 0,
+  "cosmos_completed_cases": 0
+}

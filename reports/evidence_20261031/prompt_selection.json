@@ -1,0 +1,12 @@
+{
+  "development_scores": {
+    "1": 16.957754342847426,
+    "2": 19.27851019442929,
+    "3": 21.617121450869167
+  },
+  "selected_variant": 3,
+  "selected_beats_development_baseline": true,
+  "selection_metric": "failure-zero mean Score on 12 independent development cases",
+  "formal_test_metrics_used": false,
+  "selected_config_sha256": "53f0df2d2ab5918e2bc66425e9fb75a352c958331117739cbc8bb44d78854003"
+}
