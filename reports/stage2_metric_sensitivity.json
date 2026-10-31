@@ -1,0 +1,8 @@
+{
+  "experiment_type": "CPU metric sensitivity diagnostic, NOT a model/baseline experiment",
+  "rule": "halve translations, keep each original yaw on its final half-step; same polyline and endpoint",
+  "eligible": 97,
+  "skipped_over_64": 1,
+  "mean_Score_delta": 0.17314270488477038,
+  "max_abs_Score_delta": 2.923020242565798
+}

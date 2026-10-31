@@ -1,0 +1,33 @@
+{
+  "revision": "ecf02ef425398b3cf5bd76a729fae1edd928ed98",
+  "splits": {
+    "val_seen": {
+      "split": "val_seen",
+      "episodes": 10806,
+      "images_decoded": 189873,
+      "trajectory_files": 10806,
+      "regular_members": 200679,
+      "image_pose_count_mismatches": 0,
+      "complete_initial_inputs": true,
+      "sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+      "bytes": 7409704960
+    },
+    "val_unseen": {
+      "split": "val_unseen",
+      "episodes": 4500,
+      "images_decoded": 79689,
+      "trajectory_files": 4500,
+      "regular_members": 84189,
+      "image_pose_count_mismatches": 0,
+      "complete_initial_inputs": true,
+      "sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+      "bytes": 20311838720
+    }
+  },
+  "both_validation_splits_audited": true,
+  "audit_source": "outputs/full_validation_audit_20261031T122924.json",
+  "download_final_bytes": {
+    "val_seen": 7409704960,
+    "val_unseen": 20311838720
+  }
+}

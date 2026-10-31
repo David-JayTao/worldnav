@@ -1,6 +1,8 @@
 """Audit staged blobs before a public commit/push. Does not print secret values."""
 from pathlib import PurePosixPath
 import re
+import io
+import zipfile
 import subprocess
 import sys
 
@@ -18,9 +20,18 @@ def audit_blob(name,content):
         path.suffix in BLOCKED_SUFFIX or path.name=='.env' or
         (path.name.startswith('.env.') and path.name!='.env.example')):
         problems.append('excluded artifact type')
-    if len(content)>1024*1024:problems.append('blob exceeds 1 MiB; needs explicit review')
+    limit=10*1024*1024 if path.suffix in {'.pptx','.pdf'} else 1024*1024
+    if len(content)>limit:problems.append('blob exceeds publication size limit; needs explicit review')
+    payloads=[content]
+    if path.suffix=='.pptx':
+        try:
+            with zipfile.ZipFile(io.BytesIO(content)) as archive:
+                if sum(i.file_size for i in archive.infolist())>50*1024*1024:
+                    problems.append('PPT expanded payload exceeds 50 MiB')
+                else:payloads.extend(archive.read(i) for i in archive.namelist() if i.endswith('.xml'))
+        except zipfile.BadZipFile:problems.append('Invalid PPTX archive')
     for index,pattern in enumerate(PATTERNS):
-        if re.search(pattern,content):problems.append(f'sensitive/path pattern {index}')
+        if any(re.search(pattern,payload) for payload in payloads):problems.append(f'sensitive/path pattern {index}')
     return problems
 
 

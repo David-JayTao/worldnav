@@ -1,3 +1,5 @@
+> 第二阶段现场更新（2026-10-31）：两个验证集整包SHA256和逐图审计均完成；seen为10,806 episode/189,873图，unseen为4,500 episode/79,689图，图片/位姿数量不匹配均0。旧实验已只读冻结并重算；五项新策略开发实验完成，Turn按开发集Score33.075选中并冻结，正式推理另见实时运行目录。83项CPU/Mock测试通过。Cosmos仍未运行，GPU分配0。用户已授权安全正常推送；下文历史“禁止push/未完整下载”等为当时快照，不代表当前状态。
+
 # 项目真实状态
 
 2026-10-30：Repository Bootstrap / Engineering & Baseline Pipeline。

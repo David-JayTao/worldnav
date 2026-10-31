@@ -56,26 +56,31 @@ def build():
  for i,label in enumerate(labels):
   col=i%4;row=i//4;x=.75+col*3.15;y=1.8+row*1.8;box(s,x,y,2.7,.85,fill='EDF4F8',radius=False);text(s,x+.12,y+.18,2.45,.5,label,21,BLUE,True)
   if col<3:arrow(s,x+2.72,y+.42,x+3.08,y+.42)
+ arrow(s,11.55,2.7,11.55,3.15);arrow(s,11.55,3.15,2.1,3.15);arrow(s,2.1,3.15,2.1,3.58)
  text(s,.85,5.6,11.7,.9,'原始响应 → 预测落盘 → GT 评测\n配置、Prompt、Manifest、源码快照、请求数、Token、失败类别全部保留',20)
  s=add('Base：合法动作不等于可靠导航','Base的100条预测都能通过动作校验，但只有5条终点成功，总Score为11.040。表格分别展示seen和unseen，二者存在较大差异，不能只给总分。尺度诊断显示Base平均预测路径偏长，而路径形状和终点定位也不稳定。这个实验的价值是建立实际运行的参照与问题定位，而不是证明通用VLM已经解决导航。这里所有指标都来自原始响应独立重算，分母为固定100条，不是筛选成功样本之后计算。','stage2_recomputed_metrics.json；独立原始响应重算')
  table(s,[['分组','有效','SR','Score','ATE','RPE','F','H'],['Overall',*metrics(base)],*[[split,*metrics({'overall':g})] for split,g in base['per_split'].items()]],.7,1.6,12,2.15,size=16)
  text(s,.85,4.25,11.5,.75,'100/100 合法预测，导航成功 5/100',29,BLUE,True)
  text(s,.85,5.25,11.4,.9,'初步问题：尺度、路径形状与停止位置\n合法 JSON 是工程条件，SR / 轨迹保真度才描述导航表现。',21)
  s=add('开发集策略消融：从措辞约束走向显式路线表示','上一轮独立12例上，V1、V2和V3的Score依次是16.958、19.279和21.617，所以选择V3；并不是因为V3的SR最高。本轮保持V3不动，分别研究尺度、停止和转弯，并增加结构化路线编译和原生JSON参数对照。右表是实际完成的开发集结果，格式失败记零。结构化编译器只细分模型自己规划的距离，不访问GT，也不修补非法段。选择只读取开发集，但12例太少且被反复使用，因此结果是探索性证据。','stage2_selection.json；各stage2_dev运行；原V1/V2/V3开发集')
- chart(s,['V1','V2','V3'],[('旧开发集 Score',[16.957754342847426,19.27851019442929,21.617121450869167])],.65,1.6,4.8,3.4,'独立开发集（n=12）；Score')
+ c=chart(s,['V1','V2','V3'],[('旧开发集 Score',[read('reports/stage2_recomputed_metrics.json')['runs'][f'qwen_prompt_ablation/v{v}']['overall']['Score_failure_zero'] for v in (1,2,3)])],.65,1.6,4.8,3.4,'独立开发集（n=12）；Score')
+ c.category_axis.has_title=True;c.category_axis.axis_title.text_frame.text='Prompt版本'
+ c.value_axis.has_title=True;c.value_axis.axis_title.text_frame.text='失败记零 mean Score'
  rows=[['策略','有效/12','SR','Score']]
  for name,r in dev.items():
   g=r['overall'];rows.append([name,f"{g['valid']}/12",f"{g['sr_numerator']}/12",f"{g['Score_failure_zero']:.3f}"])
  table(s,rows,5.75,1.6,6.85,3.8,size=15)
  text(s,.85,5.65,11.5,.9,f"开发集选定：{sel['selected']}；是否超过 V3：{sel['selected_beats_V3_on_development']}\n主指标：失败记零 mean Score；小样本结果不作泛化保证。",19)
  s=add('配对结果：相同输入、显式失败分母','本页先看旧100例的配对比较。Base到V3提高16.716分，配对bootstrap区间约11.361到22.064，58条改善、15条下降、27条持平。V3的两条格式失败仍在100分母中记零，ATE等指标则来自98条有效子集，所以不能把两个口径混用。本轮新候选与V3的差异同样使用逐例配对，负结果也完整保留。若下方列出完整归档的新100例，它是不同样本的独立表，只能在那张新表内比较，不能拿它与旧集直接相减。','stage2_final_metrics.json；old_Base_vs_V3、old_V3_vs_new、full_control')
- table(s,[['旧100-case','有效','SR','Score','ATE','RPE','F','H'],['Base',*metrics(base)],['V3',*metrics(v3)],['新候选',*metrics(new)]],.7,1.45,12,2.1,size=15)
- text(s,.85,3.85,11.5,.5,f"Base→V3：ΔScore {oldpair['score_mean_delta']:.3f}；95% CI [{oldpair['paired_bootstrap_95ci'][0]:.3f}, {oldpair['paired_bootstrap_95ci'][1]:.3f}]",21,BLUE,True)
- text(s,.85,4.5,11.5,.6,f"V3→新候选：ΔScore {paired['score_mean_delta']:.3f}；提升/下降/持平 {paired['improved']}/{paired['worsened']}/{paired['tied']}",20,TEAL,True)
+ table(s,[['旧100-case','有效','SR','Score','ATE','RPE','F','H'],['Base',*metrics(base)],['V3',*metrics(v3)],['新候选',*metrics(new)]],.7,1.45,12,1.9,size=15)
+ text(s,.85,3.55,11.5,.5,f"Base→V3：ΔScore {oldpair['score_mean_delta']:.3f}；95% CI [{oldpair['paired_bootstrap_95ci'][0]:.3f}, {oldpair['paired_bootstrap_95ci'][1]:.3f}]",21,BLUE,True)
+ text(s,.85,4.6,11.5,.6,f"V3→新候选：ΔScore {paired['score_mean_delta']:.3f}；提升/下降/持平 {paired['improved']}/{paired['worsened']}/{paired['tied']}",20,TEAL,True)
+ text(s,.85,4.1,11.5,.4,'Base→V3 改善/下降/持平：58/15/27；Seen Score 4.419→16.962；Unseen 17.661→38.549',14,GRAY)
  full=data.get('full_control')
  if full:
   table(s,[['新完整归档抽样100例','有效','SR','Score'],*[ [name,f"{r['overall']['valid']}/100",f"{100*r['overall']['SR_failure_zero']:.1f}%",f"{r['overall']['Score_failure_zero']:.3f}"] for name,r in full['runs'].items()]],.9,5.35,11.5,1.05,size=14)
  else:text(s,.85,5.5,11.5,.8,'CI 只描述当前样本重采样；不代表完整验证集或排行榜。\nSR / Score：计划分母失败记零；ATE / RPE / F / H：有效子集。',17,GRAY)
+ text(s,.85,6.6,11.5,.3,'SR / Score：计划分母，失败记零；ATE / RPE / F / H：有效子集。CI仅描述当前样本重采样。',12,GRAY)
  s=add('真实案例：改善与失败都展示','这两张图按预先定义的诊断规则自动选择：左侧是Base到V3分数提升最大的样本，右侧是V3终点误差最大的样本。两边都来自真实初始RGB和原始指令，叠加同一轨迹的GT、Base和V3预测；GT只用于事后解释。对照可以看到分数改善并不等于所有样本都解决，最差终点仍可能很远。它们不是人工挑选的全部成功故事。更多尺度、转弯代理、停止越界代理和格式失败案例保存在完整分析目录，可在讨论中逐个追溯原始响应。','outputs/stage2_analysis/gallery.json；自动排序选择；真实输入与轨迹')
  for i,role in enumerate(['largest_score_gain','worst_endpoint']):
   g=next(x for x in gallery if x['role']==role);x=.65+i*6.25
@@ -96,16 +101,18 @@ def build():
  line(s,3.65,'数据完整性',f"完整审计通过：{audit.get('complete',False)}；大小、SHA256、逐图解码")
  line(s,4.65,'工程测试',f"{data['cpu_test_count']} 项 CPU / Mock 通过；不代表模型性能")
  line(s,5.65,'可复现链路','只读旧快照；原始响应、配置、清单与源码 SHA256；失败保留')
+ text(s,.85,6.6,11.5,.3,'Manifest SHA256：旧100 b7151e01e00f9b35…；新100 '+audit['manifests'].get('configs/eval_100_full_stage2.json',{}).get('sha256','未生成')[:16]+'…；完整值见数据审计报告',12,GRAY)
  s=add('局限性与资源：哪些结论现在还不能给','首先，旧100例来自归档前缀，不能代表完整验证集；新全归档分层样本也只有100例，仍不是全量评测。第二，评测调用公开demo，没有证据证明它与私有CodaBench评分器相同。第三，开发集很小，多策略选择有偏差，旧测试集已经反复使用。第四，API模型别名无法锁定服务端权重，temperature为零也不保证逐位确定性。Cosmos核查仍然没有授权，Reason2-8B没有运行；LCVN缺少任务训练产物，目前分配GPU也为零，这些阻塞没有被工程测试替代。','stage2_model_access.json；数据采样记录；固定公开评测代码')
  line(s,1.55,'统计限制','小开发集、多候选选择、旧测试复用；不作泛化保证')
  line(s,2.55,'评测边界','公开 demo ≠ 已验证的私有 scorer；无排行榜成绩')
  line(s,3.55,'模型身份','通用视觉语言 API ≠ 专用导航模型；服务端版本不透明')
  line(s,4.55,'Cosmos Reason2-8B','NOT RUN / AUTHORIZATION UNAVAILABLE')
  line(s,5.55,'LCVN 与算力','缺可验证任务 checkpoint；当前获分配 GPU 为 0')
+ if data.get('vision_probe'):text(s,.85,6.6,11.5,.3,'额外 Qwen3-VL 路由：终止于有限超时探测；未决请求单列，不计为有效模型预测。',12,GRAY)
  s=add('研究结论与下一步：以独立验证推动路线规划','本轮把已有结果冻结并重算，完成分开的尺度、停止、转弯、结构化和JSON实验，所有正负结果都保留。下一步最值得投入的是扩大真正独立的开发和测试样本，检验在可见地标约束下分段估计距离和终止条件，而不是继续对旧100例调Prompt。结构化表示如果没胜出，也不能只因其工程上整齐就宣称更好。团队资源方面，优先获取真实Cosmos endpoint或NVIDIA授权，以及LCVN匹配权重；GPU到位后先做1例验证输入输出，再做同清单对照，避免一开始铺开大实验。','stage2_selection.json；stage2_final_metrics.json；完整实验报告')
  line(s,1.65,'本轮已完成','冻结与重算；分离消融；真实案例；数据审计与科研汇报')
  line(s,2.65,'优先研究问题','地标约束的分段距离、停止条件和转弯事件联合建模')
- line(s,3.65,'验证路线','扩展独立开发集 → 冻结策略 → 新测试版本 → 误差归因')
+ line(s,3.65,'验证路线','已准备24例独立清单 → 后续确认实验 → 冻结下一版策略')
  line(s,4.65,'团队需要决策','Cosmos 合法 endpoint；LCVN 任务权重；可分配 GPU')
  line(s,5.65,'避免错误投入','不对同一旧测试集反复调参；保留没有提升的真实结果')
  out=ROOT/'reports/WorldNav_科研冲刺汇报_20261031_v2.pptx'

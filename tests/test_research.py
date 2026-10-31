@@ -72,3 +72,18 @@ class ResearchPolicyTests(unittest.TestCase):
    summary=sprint_summary(run,frozen,budget,cfg)
    self.assertIsNone(summary['per_split']['val_unseen']['score_all_planned_failure_zero'])
    self.assertEqual(summary['planned_cases'],1)
+
+ def test_public_audit_checks_embedded_ppt_xml(self):
+  import zipfile,io
+  from audit_public import audit_blob
+  buffer=io.BytesIO()
+  with zipfile.ZipFile(buffer,'w',zipfile.ZIP_DEFLATED) as archive:
+   archive.writestr('ppt/slides/slide1.xml','<text>'+('sk-'+'a'*30)+'</text>')
+  self.assertTrue(any('sensitive' in e for e in audit_blob('reports/demo.pptx',buffer.getvalue())))
+
+ def test_metric_sensitivity_subdivision_keeps_body_frame_polyline_endpoint(self):
+  from audit_metric_sensitivity import subdivide
+  actions=[[1,.2,.7],[0,0,-.3],[.4,-.1,-.8]]
+  xy,yaw=integrate(actions);other,heading=integrate(subdivide(actions))
+  self.assertAlmostEqual(xy[-1][0],other[-1][0]);self.assertAlmostEqual(xy[-1][1],other[-1][1]);self.assertAlmostEqual(yaw[-1],heading[-1])
+  self.assertAlmostEqual(sum(math.dist(a,b) for a,b in zip(xy,xy[1:])),sum(math.dist(a,b) for a,b in zip(other,other[1:])))

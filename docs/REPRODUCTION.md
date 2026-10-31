@@ -27,7 +27,7 @@ CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 "$HOME/.venv/bin/python" -m un
 "$HOME/.venv/bin/python" scripts/audit_validation.py --data-root "$WORLDNAV_DATA_ROOT" --output outputs/full_data_audit_new.json
 ```
 
-整包哈希成功前不改名成 `.tar`。逐图片审计不全量解包。`scripts/complete_validation.sh` 提供有界自动续传，完整后生成未来全归档清单，不改本轮正式对照集。
+整包哈希成功前不改名成 `.tar`。逐图片审计不全量解包。`scripts/complete_validation.sh` 提供有界自动续传，完整后完成整包审计；新全归档清单由独立的prepare_full_stage2.sh生成，不改本轮正式对照集。
 
 `configs/eval_100.json` 是本轮固定正式本地对照集，来自冻结前缀，种子 20261030；SHA256 `b7151e01e00f9b3588c44cae9d10de0d32bba8e3f7a17789b9187403af4eef44`。50/50、每 split 风格 17/17/16，100 个不同轨迹内容哈希。原有清单通过 `build_eval_manifest.py --allow-partial` 再生时冻结前缀，不随下载增长变化。
 
@@ -99,7 +99,7 @@ sh scripts/run_api_sprint.sh --manifest configs/eval_100.json --api-config confi
 
 - 旧数据独立重算：`scripts/recompute_stage2.py`，输出新目录，不改旧运行目录。已存在输出时拒绝覆盖，复核可直接调用模块内 `recompute(run, data_root)`。
 - 开发集：`scripts/run_stage2_research.sh`，顺序比较Scale/Stop/Turn/Structured/RobustJSON及独立视觉模型，最多3并发、每候选36请求；JSON先做单例能力检查。不要在已有tmux任务时重复启动。
-- 冻结：`scripts/select_stage2.py`只读取开发集指标；配置已存在时拒绝重新选择。候选正式实验仅执行一次，两条旧V3格式失败保持原样。
+- 冻结：`scripts/select_stage2.py`只读取开发集指标；配置已存在时核验哈希和开发选择一致，复用原冻结证据，禁止重新选择。候选正式实验仅执行一次，两条旧V3格式失败保持原样。
 - 完整数据：`scripts/complete_validation.sh`从现有part续传，内层4次指数退避、外层3次有界循环，完成后全包SHA256和逐图片审计。固定来源在configs/datasets.json，不重复下载已有字节。
 - 新完整归档清单：`scripts/prepare_full_stage2.sh`，种子20261101，排除旧正式集与dev12全部轨迹组；新清单仅在完整文件哈希正确时生成。按具有三种指令的轨迹组分层抽样，不声称全部episode等概率。
 - 全归档新对照：`scripts/run_stage2_full_control.sh`等待候选冻结且旧正式实验结束，再顺序执行新清单Base与候选；不据新测试结果修改策略。

@@ -9,9 +9,6 @@ while [ "$attempt" -lt 3 ]; do
     attempt=$((attempt + 1))
     if "$python_bin" -u scripts/download_validation.py --data-root "$data_root"; then
         "$python_bin" -u scripts/audit_validation.py --data-root "$data_root" --output "outputs/full_validation_audit_$(date +%Y%m%dT%H%M%S).json"
-        if [ ! -f configs/eval_100.full_archive_future.json ]; then
-            "$python_bin" scripts/build_eval_manifest.py --data-root "$data_root" --output configs/eval_100.full_archive_future.json
-        fi
         exit 0
     fi
     printf 'Validation resume cycle %s failed; partial files preserved.\n' "$attempt"

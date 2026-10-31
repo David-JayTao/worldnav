@@ -1,0 +1,20 @@
+{
+  "provider": "SinapisAI",
+  "base_url": "https://api.sinapisai.com/v1",
+  "model": "qwen/qwen3.8-27b",
+  "api_key_env": "SINAPISAI_API_KEY",
+  "temperature": 0,
+  "max_tokens": 4096,
+  "timeout_seconds": 180,
+  "max_concurrency": 4,
+  "format_retries": 1,
+  "max_image_edge": 768,
+  "jpeg_quality": 90,
+  "pricing_verified": false,
+  "account_limit_verified": false,
+  "prompt_version": "research_turn_v1",
+  "network_retries": 2,
+  "max_requests": 240,
+  "spending_authorization": "worldnav_sprint_20261031",
+  "retry_backoff_seconds": 3
+}

@@ -1,0 +1,46 @@
+{
+  "selected": "turn",
+  "candidates": [
+    {
+      "strategy": "scale",
+      "Score": 21.47861489767097,
+      "SR": 0.08333333333333333,
+      "valid": 11,
+      "ATE": 1.7732499555049486
+    },
+    {
+      "strategy": "stop",
+      "Score": 28.36540323970011,
+      "SR": 0.16666666666666666,
+      "valid": 12,
+      "ATE": 1.8108791635939252
+    },
+    {
+      "strategy": "turn",
+      "Score": 33.07493750935985,
+      "SR": 0.16666666666666666,
+      "valid": 12,
+      "ATE": 1.614220707472687
+    },
+    {
+      "strategy": "structured",
+      "Score": 19.756489776742153,
+      "SR": 0.25,
+      "valid": 12,
+      "ATE": 1.6598749512047075
+    },
+    {
+      "strategy": "json",
+      "Score": 11.54268969097614,
+      "SR": 0.08333333333333333,
+      "valid": 11,
+      "ATE": 2.747258359591935
+    }
+  ],
+  "V3_development_Score": 21.617121450869167,
+  "selected_beats_V3_on_development": true,
+  "formal_metrics_used_for_selection": false,
+  "formal_set_reused_exploratory": true,
+  "config_sha256": "9567c07bed6b5b9a0f89f9261a48d2d17d9ca158d2ee2654dc9cf0cd82d008af",
+  "frozen_at_utc": "2026-10-31T04:39:07.185341+00:00"
+}

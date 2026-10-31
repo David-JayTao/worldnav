@@ -11,7 +11,7 @@ done
 if [ "$count" -ge 180 ]; then echo 'Reached bounded readiness wait.'; exit 1; fi
 for variant in base candidate; do
     run="runs/stage2_full_${variant}_100"
-    if [ "$variant" = base ]; then config=configs/qwen_base_100.json; else config=configs/stage2_candidate_100.json; fi
+    if [ "$variant" = base ]; then config=configs/stage2_full_base.json; else config=configs/stage2_candidate_100.json; fi
     if [ -d "$run" ]; then resume=--resume; else resume=; fi
     sh scripts/run_api_sprint.sh --manifest configs/eval_100_full_stage2.json --api-config "$config" --data-root /data1/worldnav-data --run-dir "$run" $resume
     "$py" -c 'import json,sys,pathlib; rows=[a for p in pathlib.Path(sys.argv[1],"raw_responses").glob("*.json") for a in json.load(open(p)).get("attempts",[])]; sys.exit(1 if any(a.get("http_status") in (401,402,403) for a in rows) else 0)' "$run"

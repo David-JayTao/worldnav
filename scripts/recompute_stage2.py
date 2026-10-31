@@ -4,6 +4,8 @@ from pathlib import Path
 import numpy as np
 ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'src'),str(ROOT/'scripts')]
 from worldnav.qwen_api import parse_actions,encode_image
+from worldnav.protocol import load_json
+from worldnav.trajectory_plan import compile_plan
 from worldnav.data import load_observation,load_reference
 from worldnav.geometry import integrate
 from worldnav.evaluation import load_metrics,evaluate
@@ -43,8 +45,8 @@ def recompute(run,root):
  json_count=0;legal_count=0
  for a in attempts:
   try:
-   content=a['raw_response']['choices'][0]['message']['content'];json.loads(content);json_count+=1
-   parse_actions(content);legal_count+=1
+   content=a['raw_response']['choices'][0]['message']['content'];load_json(content);json_count+=1
+   (compile_plan(content) if cfg.get('policy_kind')=='structured_route' else parse_actions(content));legal_count+=1
   except (KeyError,IndexError,ValueError,TypeError):pass
  return {'run':run.name,'overall':aggregate(rows),'per_split':{s:aggregate([r for r in rows if r['split']==s]) for s in ['val_seen','val_unseen']},'by_instruction_style':{str(s):aggregate([r for r in rows if r['style']==s]) for s in [0,1,2]},'request_count':len(attempts),'api_success_count':sum(a['api_success'] for a in attempts),'json_valid_response_count':json_count,'legal_action_response_count':legal_count,'api_success_rate':sum(a['api_success'] for a in attempts)/len(attempts),'json_valid_per_request':json_count/len(attempts),'final_valid_rate':sum(r['metrics'] is not None for r in rows)/len(rows),'input_tokens':sum((a.get('raw_response',{}).get('usage') or {}).get('prompt_tokens',0) or 0 for a in attempts),'output_tokens':sum((a.get('raw_response',{}).get('usage') or {}).get('completion_tokens',0) or 0 for a in attempts),'latency_sum_seconds':sum(a.get('latency_seconds',0) for a in attempts),'failures':dict(collections.Counter(r['failure'] for r in rows if r['failure'])),'cases':rows}
 
