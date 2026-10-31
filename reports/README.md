@@ -1,3 +1,9 @@
+<!-- STAGE2_FINAL_START -->
+## 最新科研汇报
+
+请先查看[第二阶段完整交付](STAGE2_DELIVERY.md)。下方为之前阶段的历史成果。
+<!-- STAGE2_FINAL_END -->
+
 # 阶段成果索引
 
 - [会议完整汇报](meeting_2026-10-31.md)

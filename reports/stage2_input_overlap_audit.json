@@ -1,0 +1,26 @@
+{
+  "eval_100.json vs dev_12.json": {
+    "shared_initial_image_hashes": 0,
+    "shared_image_instruction_pairs": 0
+  },
+  "eval_100.json vs eval_100_full_stage2.json": {
+    "shared_initial_image_hashes": 0,
+    "shared_image_instruction_pairs": 0
+  },
+  "eval_100.json vs dev_24_full_stage2.json": {
+    "shared_initial_image_hashes": 0,
+    "shared_image_instruction_pairs": 0
+  },
+  "dev_12.json vs eval_100_full_stage2.json": {
+    "shared_initial_image_hashes": 0,
+    "shared_image_instruction_pairs": 0
+  },
+  "dev_12.json vs dev_24_full_stage2.json": {
+    "shared_initial_image_hashes": 0,
+    "shared_image_instruction_pairs": 0
+  },
+  "eval_100_full_stage2.json vs dev_24_full_stage2.json": {
+    "shared_initial_image_hashes": 0,
+    "shared_image_instruction_pairs": 0
+  }
+}

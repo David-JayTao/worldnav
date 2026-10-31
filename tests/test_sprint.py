@@ -31,6 +31,9 @@ class SprintTests(unittest.TestCase):
             result=compare(base,opt)
             json.dumps(result,allow_nan=False)  # All NumPy scalar results must serialize.
             self.assertEqual(result['cases'],2);self.assertEqual(result['score_mean_delta'],0)
+            self.assertEqual(result['coverage_decomposition']['1_to_1']['contribution_to_planned_mean'],5)
+            self.assertEqual(result['coverage_decomposition']['1_to_0']['contribution_to_planned_mean'],-5)
+            self.assertEqual(sum(g['cases'] for g in result['coverage_decomposition'].values()),2)
             self.assertEqual(result['improved'],1);self.assertEqual(result['worsened'],1)
             changed=json.loads((opt/'manifest.json').read_text());changed['episodes'][0]['instruction']='Different'
             (opt/'manifest.json').write_text(json.dumps(changed))

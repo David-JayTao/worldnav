@@ -1,3 +1,11 @@
+<!-- STAGE2_FINAL_START -->
+## 最新第二阶段成果
+
+[完整交付入口](reports/STAGE2_DELIVERY.md)包含新旧两套100例对照、数据整包审计、策略负结果、13页PPT/PDF和讲稿。新完整集Turn−V3：-2.536；区间跨零，未获得稳定增益证据。
+
+GPU分配仍为0，Cosmos未运行；CPU测试和真实模型推理分别记录。
+<!-- STAGE2_FINAL_END -->
+
 # WorldNav：视觉语言导航实验
 
 RoboWorld 2026 Track 1：根据一张初始 RGB 和一句导航指令，预测完整开放环动作轨迹。本机获分配 GPU 为 **0**；使用远程 SinapisAI `qwen/qwen3.8-27b` 开展真实 API Zero-shot 实验。当前完成数量和指标以 `runs/*/summary.json` 为准，会议材料由真实文件自动生成。

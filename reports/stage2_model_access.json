@@ -29,5 +29,8 @@
     "stage": "PAUSED"
   },
   "nvidia_anonymous_real_image_status": 401,
-  "Cosmos Reason2-8B": "NOT RUN / AUTHORIZATION UNAVAILABLE"
+  "Cosmos Reason2-8B": "NOT RUN / AUTHORIZATION UNAVAILABLE",
+  "final_standard_user_configs_checked": true,
+  "nvidia_credential_found": false,
+  "team_cosmos_endpoint_found": false
 }

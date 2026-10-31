@@ -1,0 +1,9 @@
+{
+  "model": "qwen/qwen3-vl-8b-instruct",
+  "smoke_valid": 0,
+  "development_completed": 0,
+  "development_valid": 0,
+  "timeouts_seconds": 45,
+  "network_retries": 0,
+  "formal_100case_run": false
+}

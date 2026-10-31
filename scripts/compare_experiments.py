@@ -29,7 +29,13 @@ def compare(base,opt):
             score_delta=mb.get('Score',0)-ma.get('Score',0),base_SR=ma.get('SR',0),optimized_SR=mb.get('SR',0)))
     delta=np.asarray([r['score_delta'] for r in rows]);rng=np.random.default_rng(20261031)
     bootstrap=delta[rng.integers(0,len(rows),size=(5000,len(rows)))].mean(axis=1)
-    return dict(cases=len(rows),failure_score_policy='zero_for_no_usable_prediction',
+    decomposition={}
+    for a_valid,b_valid in [(True,True),(False,True),(True,False),(False,False)]:
+        group=[r for r in rows if r['base_valid']==a_valid and r['optimized_valid']==b_valid]
+        decomposition[f'{int(a_valid)}_to_{int(b_valid)}']={'cases':len(group),
+            'conditional_mean_delta':sum(r['score_delta'] for r in group)/len(group) if group else None,
+            'contribution_to_planned_mean':sum(r['score_delta'] for r in group)/len(rows)}
+    return dict(coverage_decomposition=decomposition,cases=len(rows),failure_score_policy='zero_for_no_usable_prediction',
         score_mean_delta=float(delta.mean()),paired_bootstrap_95ci=[float(x) for x in np.quantile(bootstrap,[.025,.975])],
         improved=int(np.count_nonzero(delta>1e-10)),worsened=int(np.count_nonzero(delta< -1e-10)),tied=int(np.count_nonzero(np.abs(delta)<=1e-10)),
         sr_gained=sum(r['optimized_SR']==1 and r['base_SR']==0 for r in rows),

@@ -1,0 +1,290 @@
+{
+  "revision": "ecf02ef425398b3cf5bd76a729fae1edd928ed98",
+  "source": "https://huggingface.co/datasets/fly1113/LCVN",
+  "splits": {
+    "val_seen": {
+      "split": "val_seen",
+      "episodes": 10806,
+      "images_decoded": 189873,
+      "trajectory_files": 10806,
+      "regular_members": 200679,
+      "image_pose_count_mismatches": 0,
+      "complete_initial_inputs": true,
+      "sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+      "bytes": 7409704960
+    },
+    "val_unseen": {
+      "split": "val_unseen",
+      "episodes": 4500,
+      "images_decoded": 79689,
+      "trajectory_files": 4500,
+      "regular_members": 84189,
+      "image_pose_count_mismatches": 0,
+      "complete_initial_inputs": true,
+      "sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+      "bytes": 20311838720
+    }
+  },
+  "download": {
+    "val_seen": {
+      "downloaded_bytes": 7409704960,
+      "expected_bytes": 7409704960,
+      "expected_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+      "complete_archive_exists": true
+    },
+    "val_unseen": {
+      "downloaded_bytes": 20311838720,
+      "expected_bytes": 20311838720,
+      "expected_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+      "complete_archive_exists": true
+    }
+  },
+  "complete": true,
+  "checked_at_utc": "2026-10-31T05:51:23.068203+00:00",
+  "audit_source": "outputs/full_validation_audit_20261031T122924.json",
+  "trajectory_group_audit": {
+    "dataset_revision": "ecf02ef425398b3cf5bd76a729fae1edd928ed98",
+    "splits": {
+      "val_seen": {
+        "instruction_specific_episode_dirs": 10806,
+        "distinct_trajectory_content_groups": 3602,
+        "groups_with_all_three_instruction_styles": 3602,
+        "style_episode_counts": {
+          "0": 3602,
+          "1": 3602,
+          "2": 3602
+        },
+        "archive_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1"
+      },
+      "val_unseen": {
+        "instruction_specific_episode_dirs": 4500,
+        "distinct_trajectory_content_groups": 1500,
+        "groups_with_all_three_instruction_styles": 1500,
+        "style_episode_counts": {
+          "0": 1500,
+          "1": 1500,
+          "2": 1500
+        },
+        "archive_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55"
+      }
+    },
+    "note": "Image audit counts files (including repetition across instruction variants), not unique physical views. Group IDs use position/yaw content hashes."
+  },
+  "input_overlap_audit": {
+    "eval_100.json vs dev_12.json": {
+      "shared_initial_image_hashes": 0,
+      "shared_image_instruction_pairs": 0
+    },
+    "eval_100.json vs eval_100_full_stage2.json": {
+      "shared_initial_image_hashes": 0,
+      "shared_image_instruction_pairs": 0
+    },
+    "eval_100.json vs dev_24_full_stage2.json": {
+      "shared_initial_image_hashes": 0,
+      "shared_image_instruction_pairs": 0
+    },
+    "dev_12.json vs eval_100_full_stage2.json": {
+      "shared_initial_image_hashes": 0,
+      "shared_image_instruction_pairs": 0
+    },
+    "dev_12.json vs dev_24_full_stage2.json": {
+      "shared_initial_image_hashes": 0,
+      "shared_image_instruction_pairs": 0
+    },
+    "eval_100_full_stage2.json vs dev_24_full_stage2.json": {
+      "shared_initial_image_hashes": 0,
+      "shared_image_instruction_pairs": 0
+    }
+  },
+  "manifests": {
+    "configs/eval_100.json": {
+      "sha256": "b7151e01e00f9b3588c44cae9d10de0d32bba8e3f7a17789b9187403af4eef44",
+      "count": 100,
+      "seed": 20261030,
+      "sources": {
+        "val_seen": {
+          "snapshot_bytes": 978381967,
+          "snapshot_sha256": "89ba49d30a507ada255ed1ca33230c12606859604a6ee9beb2418b4a357fe980",
+          "archive_bytes": 7409704960,
+          "archive_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+          "archive_verified": false,
+          "catalog_episode_count": 3140,
+          "sampling_scope": "downloaded_prefix"
+        },
+        "val_unseen": {
+          "snapshot_bytes": 1133410305,
+          "snapshot_sha256": "d39036fbfa7c6cb2af7ee800c6b6bdfd101260f19d673750701c5bd8fdc77054",
+          "archive_bytes": 20311838720,
+          "archive_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+          "archive_verified": false,
+          "catalog_episode_count": 228,
+          "sampling_scope": "downloaded_prefix"
+        }
+      },
+      "excluded_manifests": [],
+      "distinct_trajectory_groups": 100,
+      "per_split": {
+        "val_seen": {
+          "count": 50,
+          "instruction_styles": {
+            "0": 17,
+            "1": 17,
+            "2": 16
+          }
+        },
+        "val_unseen": {
+          "count": 50,
+          "instruction_styles": {
+            "0": 17,
+            "1": 17,
+            "2": 16
+          }
+        }
+      }
+    },
+    "configs/dev_12.json": {
+      "sha256": "8a620ce64c01ee3f93b042288acd051c5afd15ea1cdba66bc6706a61e144a304",
+      "count": 12,
+      "seed": 20261031,
+      "sources": {
+        "val_seen": {
+          "snapshot_bytes": 978381967,
+          "snapshot_sha256": "89ba49d30a507ada255ed1ca33230c12606859604a6ee9beb2418b4a357fe980",
+          "archive_bytes": 7409704960,
+          "archive_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+          "archive_verified": false,
+          "catalog_episode_count": 3140,
+          "sampling_scope": "downloaded_prefix"
+        },
+        "val_unseen": {
+          "snapshot_bytes": 1133410305,
+          "snapshot_sha256": "d39036fbfa7c6cb2af7ee800c6b6bdfd101260f19d673750701c5bd8fdc77054",
+          "archive_bytes": 20311838720,
+          "archive_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+          "archive_verified": false,
+          "catalog_episode_count": 228,
+          "sampling_scope": "downloaded_prefix"
+        }
+      },
+      "excluded_manifests": [],
+      "distinct_trajectory_groups": 12,
+      "per_split": {
+        "val_seen": {
+          "count": 6,
+          "instruction_styles": {
+            "0": 2,
+            "1": 2,
+            "2": 2
+          }
+        },
+        "val_unseen": {
+          "count": 6,
+          "instruction_styles": {
+            "0": 2,
+            "1": 2,
+            "2": 2
+          }
+        }
+      }
+    },
+    "configs/eval_100_full_stage2.json": {
+      "sha256": "b4037013b04d578afc167828c00cffa5bfcacd8067cbe3bbc2c7d83ee7e6f8cf",
+      "count": 100,
+      "seed": 20261101,
+      "sources": {
+        "val_seen": {
+          "snapshot_bytes": 7409704960,
+          "snapshot_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+          "archive_bytes": 7409704960,
+          "archive_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+          "archive_verified": true,
+          "catalog_episode_count": 10806,
+          "sampling_scope": "full_archive"
+        },
+        "val_unseen": {
+          "snapshot_bytes": 20311838720,
+          "snapshot_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+          "archive_bytes": 20311838720,
+          "archive_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+          "archive_verified": true,
+          "catalog_episode_count": 4500,
+          "sampling_scope": "full_archive"
+        }
+      },
+      "excluded_manifests": [
+        "configs/dev_12.json",
+        "configs/eval_100.json"
+      ],
+      "distinct_trajectory_groups": 100,
+      "per_split": {
+        "val_seen": {
+          "count": 50,
+          "instruction_styles": {
+            "0": 17,
+            "1": 17,
+            "2": 16
+          }
+        },
+        "val_unseen": {
+          "count": 50,
+          "instruction_styles": {
+            "0": 17,
+            "1": 17,
+            "2": 16
+          }
+        }
+      }
+    },
+    "configs/dev_24_full_stage2.json": {
+      "sha256": "7d58c6e10856362a2e5ed6c46e81089831e24e12b688ab220d936e3f41cfe721",
+      "count": 24,
+      "seed": 20261102,
+      "sources": {
+        "val_seen": {
+          "snapshot_bytes": 7409704960,
+          "snapshot_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+          "archive_bytes": 7409704960,
+          "archive_sha256": "ea4098d7126b3fe90cf00e6508e60879651fee36c5db37b11b5a42e0f061d5e1",
+          "archive_verified": true,
+          "catalog_episode_count": 10806,
+          "sampling_scope": "full_archive"
+        },
+        "val_unseen": {
+          "snapshot_bytes": 20311838720,
+          "snapshot_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+          "archive_bytes": 20311838720,
+          "archive_sha256": "f4da7552df485b4ad7c026eafa6bf300dcdcdb6486d1af239671f248d6d61b55",
+          "archive_verified": true,
+          "catalog_episode_count": 4500,
+          "sampling_scope": "full_archive"
+        }
+      },
+      "excluded_manifests": [
+        "configs/eval_100.json",
+        "configs/eval_100_full_stage2.json",
+        "configs/dev_12.json"
+      ],
+      "distinct_trajectory_groups": 24,
+      "per_split": {
+        "val_seen": {
+          "count": 12,
+          "instruction_styles": {
+            "0": 4,
+            "1": 4,
+            "2": 4
+          }
+        },
+        "val_unseen": {
+          "count": 12,
+          "instruction_styles": {
+            "0": 4,
+            "1": 4,
+            "2": 4
+          }
+        }
+      }
+    }
+  },
+  "full_manifest_overlap_old_formal_or_dev": 0,
+  "extra_dev_24_overlap_with_any_other_manifest": 0
+}
